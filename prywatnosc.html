@@ -84,15 +84,7 @@
   /* ——— Nagłówek ——— */
   .masthead { grid-column: 1 / -1; border-bottom: 1px solid var(--rule-strong); padding-bottom: 1.75rem; }
 
-  .wordmark {
-    font-family: var(--sans);
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 .9rem;
-  }
+  .wordmark { width: min(200px, 52vw); height: auto; display: block; margin: 0 0 8px; }
 
   h1 {
     font-family: var(--sans);
@@ -222,12 +214,16 @@
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   section[id] { scroll-margin-top: 2rem; }
 </style>
+  <link rel="apple-touch-icon" href="img/ikona.png">
+  <link rel="canonical" href="https://findgymbro.pl/prywatnosc.html">
+  <meta property="og:url" content="https://findgymbro.pl/prywatnosc.html">
+  <meta property="og:image" content="https://findgymbro.pl/img/ikona.png">
 </head>
 <body>
 <div class="page">
 
   <header class="masthead">
-    <p class="wordmark">Find GymBro</p>
+    <img class="wordmark" src="img/logo.png" alt="Find GymBro" width="760" height="111">
     <h1>Polityka prywatności i regulamin</h1>
     <p class="dateline">Obowiązuje od 1 sierpnia 2026 · wersja 1.0</p>
   </header>
@@ -303,12 +299,13 @@
     </section>
 
     <section id="p3">
-      <h2 class="section"><span class="num">§3</span> Lokalizacja — i dlaczego jej nie zapisujemy</h2>
-      <p>Aplikacja prosi o dostęp do lokalizacji w dwóch sytuacjach: żeby pokazać siłownie i ogłoszenia w Twojej okolicy oraz żeby potwierdzić obecność na treningu.</p>
+      <h2 class="section"><span class="num">§3</span> Lokalizacja</h2>
+      <p>Aplikacja prosi o dostęp do lokalizacji w trzech sytuacjach: żeby pokazać siłownie i ogłoszenia w Twojej okolicy, żeby potwierdzić obecność na treningu oraz żeby zapisać pozycję siłowni, której brakuje w naszej bazie.</p>
 
       <div class="note">
-        <p><strong>Twoje współrzędne nigdy nie trafiają do bazy.</strong> Przy potwierdzaniu obecności telefon wysyła pozycję do serwera, ten liczy odległość od siłowni i zapisuje wyłącznie odpowiedź „obecny" wraz z godziną. Sama pozycja przestaje istnieć w momencie zakończenia tego obliczenia.</p>
+        <p><strong>Przy wyszukiwaniu i potwierdzaniu obecności Twoje współrzędne nie trafiają do bazy.</strong> Przy potwierdzaniu obecności telefon wysyła pozycję do serwera, ten liczy odległość od siłowni i zapisuje wyłącznie odpowiedź „obecny" wraz z godziną. Sama pozycja przestaje istnieć w momencie zakończenia tego obliczenia.</p>
       </div>
+      <p><strong>Jeden wyjątek: dodawanie brakującej siłowni.</strong> Jeśli sam zgłosisz obiekt, którego nie mamy, zapisujemy jego pozycję — bo bez niej siłownia nie pojawi się na mapie nikomu. Do wiersza trafia też informacja, że to Ty ją dodałeś, żebyśmy mogli zweryfikować zgłoszenie. Współrzędne opisują wtedy miejsce publiczne, a nie Ciebie, ale mówimy o tym wprost, bo w chwili zapisu stoisz przy tym obiekcie.</p>
 
       <p>Zgody na lokalizację możesz odmówić. Aplikacja będzie działać dalej — wyszukiwanie przestawi się na wybór siłowni po nazwie, a obecność potwierdzisz ręcznie po treningu. Zawsze mówimy wtedy wprost, że odległości są orientacyjne.</p>
     </section>
