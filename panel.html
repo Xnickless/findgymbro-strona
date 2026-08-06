@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0B0D10">
+<link rel="icon" href="favicon.png">
+<title>Panel — Find GymBro</title>
+<style>
+  :root {
+    --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
+    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
+    --accent: #22C58B; --accent-hi: #7CF5C9; --ostrzez: #E8A33D;
+    --sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: clamp(1.75rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem) 4rem; }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem 1.25rem; margin-bottom: 2rem; }
+  h1 { font-size: 1.35rem; font-weight: 680; letter-spacing: -.02em; margin: 0; }
+  .znacznik { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
+  .spacer { flex: 1 1 auto; }
+  button {
+    font: inherit; font-size: .84rem; color: var(--ink-2);
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 99px;
+    padding: .35rem .95rem; cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .komunikat {
+    border: 1px solid var(--rule); border-left: 3px solid var(--ostrzez);
+    background: var(--raised); border-radius: 10px;
+    padding: 1rem 1.15rem; margin-bottom: 1.5rem;
+  }
+  .komunikat h2 { font-size: .98rem; font-weight: 650; margin: 0 0 .3rem; }
+  .komunikat p { margin: 0; font-size: .9rem; color: var(--ink-2); }
+  .komunikat code {
+    font-family: var(--mono); font-size: .82rem; color: var(--accent);
+    background: var(--ground); padding: .1rem .35rem; border-radius: 4px;
+  }
+
+  .grupa { margin-bottom: 2.5rem; }
+  .grupa > h2 {
+    font-family: var(--mono); font-size: .7rem; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+    margin: 0 0 .9rem; display: flex; align-items: center; gap: .5rem;
+  }
+  .grupa > h2::before {
+    content: ""; width: .45rem; height: .45rem; border-radius: 99px;
+    background: var(--accent); box-shadow: 0 0 8px rgba(34,197,139,.6);
+  }
+
+  .kafle { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .kafel {
+    border: 1px solid var(--rule); border-radius: 14px; background: var(--raised);
+    padding: 1rem 1.1rem 1.15rem; display: grid; gap: .15rem; align-content: start;
+    position: relative; overflow: hidden;
+  }
+  .kafel .liczba {
+    font-size: clamp(1.75rem, 4.5vw, 2.3rem); font-weight: 700;
+    letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums;
+  }
+  .kafel .nazwa { font-size: .88rem; font-weight: 600; color: var(--ink); }
+  .kafel .opis { font-size: .78rem; color: var(--ink-3); line-height: 1.45; }
+  .kafel .zmiana {
+    position: absolute; top: .9rem; right: 1rem;
+    font-family: var(--mono); font-size: .72rem; font-weight: 600;
+  }
+  .zmiana.w-gore { color: var(--accent); }
+  .zmiana.bez { color: var(--ink-3); }
+
+  /* Wskaźniki przeliczane, nie surowe liczby: mówią, czy produkt działa. */
+  .kafel.wyliczony { border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
+  .kafel.wyliczony .liczba { color: var(--accent); }
+
+  .wykres { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); padding: 1.15rem 1.25rem 1rem; }
+  .wykres h3 { font-size: .92rem; font-weight: 650; margin: 0 0 .15rem; }
+  .wykres .pod { font-size: .78rem; color: var(--ink-3); margin: 0 0 1rem; }
+  .wykres svg { width: 100%; height: 140px; display: block; overflow: visible; }
+  .wykres .brak { font-size: .85rem; color: var(--ink-3); margin: 0; padding: 1.5rem 0; text-align: center; }
+
+  footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: .8rem; color: var(--ink-3); }
+  footer a { color: var(--ink-2); text-decoration: none; }
+  footer a:hover { color: var(--accent); text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Find GymBro</h1>
+    <span class="znacznik" id="znacznik">wczytywanie…</span>
+    <span class="spacer"></span>
+    <button id="odswiez">Odśwież</button>
+  </header>
+
+  <div id="tresc"></div>
+
+  <footer>
+    Panel prywatny. Liczby zbiorcze, bez danych osobowych.
+    <a href="/">findgymbro.pl</a>
+  </footer>
+
+</div>
+
+<script>
+const ADRES = 'https://srhmakuqrvhecfpihzkn.supabase.co/functions/v1/statystyki';
+
+// Token nie jest zapisywany w kodzie strony — bierzemy go z adresu, pod którym
+// panel został otwarty. Dzięki temu plik może leżeć publicznie na GitHub Pages.
+const token = new URLSearchParams(location.search).get('token');
+
+const tresc = document.getElementById('tresc');
+const znacznik = document.getElementById('znacznik');
+const przyciskOdswiez = document.getElementById('odswiez');
+
+const GRUPY = [
+  { tytul: 'Ludzie', miary: ['konta', 'konta_potwierdzone', 'profile_ukonczone', 'aktywni_7_dni', 'aktywni_30_dni', 'nowi_7_dni'] },
+  { tytul: 'Aktywność', miary: ['ogloszenia_aktywne', 'ogloszenia', 'zgloszenia', 'zgloszenia_przyjete', 'rozmowy', 'wiadomosci'] },
+  { tytul: 'Treningi', miary: ['treningi_umowione', 'treningi_minione'] },
+  { tytul: 'Moderacja', miary: ['zgloszenia_naduzyc', 'blokady', 'zbanowani'] },
+];
+
+function liczba(n) {
+  return new Intl.NumberFormat('pl-PL').format(n);
+}
+
+function kafel({ nazwa, wartosc, opis, zmiana, wyliczony }) {
+  const zm = zmiana == null ? '' :
+    `<span class="zmiana ${zmiana > 0 ? 'w-gore' : 'bez'}">${zmiana > 0 ? '+' + zmiana : '—'}</span>`;
+  return `<div class="kafel${wyliczony ? ' wyliczony' : ''}">
+    ${zm}
+    <span class="liczba">${wartosc}</span>
+    <span class="nazwa">${nazwa}</span>
+    <span class="opis">${opis}</span>
+  </div>`;
+}
+
+/** Wskaźniki, które faktycznie mówią, czy produkt działa. */
+function wyliczone(m) {
+  const kafle = [];
+  const ogl = m.ogloszenia?.wartosc ?? 0;
+  const zgl = m.zgloszenia?.wartosc ?? 0;
+  const przyj = m.zgloszenia_przyjete?.wartosc ?? 0;
+  const konta = m.konta?.wartosc ?? 0;
+  const gotowe = m.profile_ukonczone?.wartosc ?? 0;
+
+  if (konta > 0) kafle.push(kafel({
+    nazwa: 'Kreator do końca', wartosc: Math.round(gotowe / konta * 100) + '%',
+    opis: `${gotowe} z ${konta} kont ma ukończony profil`, wyliczony: true,
+  }));
+  if (ogl > 0) kafle.push(kafel({
+    nazwa: 'Zgłoszeń na ogłoszenie', wartosc: (zgl / ogl).toFixed(1),
+    opis: 'ile osób średnio się zgłasza', wyliczony: true,
+  }));
+  if (zgl > 0) kafle.push(kafel({
+    nazwa: 'Skuteczność zgłoszeń', wartosc: Math.round(przyj / zgl * 100) + '%',
+    opis: `${przyj} z ${zgl} zgłoszeń przyjęto`, wyliczony: true,
+  }));
+  return kafle;
+}
+
+/** Prosty wykres liniowy — bez bibliotek, sam SVG. */
+function wykres(historia, klucz, tytul, pod) {
+  const punkty = historia
+    .map((h) => ({ dzien: h.dzien, v: Number(h.miary?.[klucz] ?? 0) }))
+    .filter((p) => Number.isFinite(p.v));
+
+  if (punkty.length < 2) {
+    return `<div class="wykres"><h3>${tytul}</h3><p class="pod">${pod}</p>
+      <p class="brak">Trend pojawi się po drugim dniu zbierania migawek.</p></div>`;
+  }
+
+  const W = 600, H = 140;
+  const max = Math.max(...punkty.map((p) => p.v), 1);
+  const krok = punkty.length > 1 ? W / (punkty.length - 1) : W;
+  const wsp = punkty.map((p, i) => [i * krok, H - (p.v / max) * (H - 12)]);
+  const linia = wsp.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const pole = `${linia} L${W},${H} L0,${H} Z`;
+  const ostatni = punkty[punkty.length - 1];
+
+  return `<div class="wykres">
+    <h3>${tytul}</h3>
+    <p class="pod">${pod} · ostatnio ${liczba(ostatni.v)} (${ostatni.dzien})</p>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${tytul}">
+      <defs><linearGradient id="g-${klucz}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22C58B" stop-opacity=".28"/>
+        <stop offset="100%" stop-color="#22C58B" stop-opacity="0"/>
+      </linearGradient></defs>
+      <path d="${pole}" fill="url(#g-${klucz})"/>
+      <path d="${linia}" fill="none" stroke="#22C58B" stroke-width="2"
+            stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <circle cx="${wsp[wsp.length-1][0]}" cy="${wsp[wsp.length-1][1]}" r="3.5" fill="#7CF5C9"/>
+    </svg>
+  </div>`;
+}
+
+function blad(tytul, opis) {
+  tresc.innerHTML = `<div class="komunikat"><h2>${tytul}</h2><p>${opis}</p></div>`;
+  znacznik.textContent = 'nie wczytano';
+}
+
+async function wczytaj() {
+  if (!token) {
+    return blad('Brak tokenu w adresie',
+      'Otwórz panel pełnym adresem, z parametrem <code>?token=…</code>. Bez niego nie ma dostępu do danych.');
+  }
+
+  przyciskOdswiez.disabled = true;
+  znacznik.textContent = 'wczytywanie…';
+
+  try {
+    const odp = await fetch(`${ADRES}?token=${encodeURIComponent(token)}`);
+    if (odp.status === 401) {
+      return blad('Token odrzucony',
+        'Sprawdź, czy adres jest kompletny i czy w Supabase ustawiono sekret <code>PANEL_TOKEN</code> o tej samej wartości.');
+    }
+    if (!odp.ok) return blad('Serwer odpowiedział błędem', `Kod ${odp.status}. Spróbuj ponownie za chwilę.`);
+
+    const dane = await odp.json();
+    const m = Object.fromEntries((dane.miary ?? []).map((x) => [x.miara, { wartosc: Number(x.wartosc), opis: x.opis }]));
+
+    // Zmiana względem wczorajszej migawki.
+    const hist = dane.historia ?? [];
+    const wczoraj = hist.length >= 2 ? hist[hist.length - 2].miary : null;
+
+    let html = '';
+
+    const wyl = wyliczone(m);
+    if (wyl.length) html += `<div class="grupa"><h2>Wskaźniki</h2><div class="kafle">${wyl.join('')}</div></div>`;
+
+    for (const g of GRUPY) {
+      const kafle = g.miary.filter((k) => m[k]).map((k) => {
+        const poprz = wczoraj?.[k];
+        const zmiana = poprz == null ? null : m[k].wartosc - Number(poprz);
+        return kafel({
+          nazwa: k.replaceAll('_', ' '),
+          wartosc: liczba(m[k].wartosc),
+          opis: m[k].opis,
+          zmiana,
+        });
+      });
+      if (kafle.length) html += `<div class="grupa"><h2>${g.tytul}</h2><div class="kafle">${kafle.join('')}</div></div>`;
+    }
+
+    html += `<div class="grupa"><h2>Trend</h2><div class="kafle" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      ${wykres(hist, 'konta', 'Konta', 'wszystkie założone')}
+      ${wykres(hist, 'ogloszenia', 'Ogłoszenia', 'wystawione łącznie')}
+    </div></div>`;
+
+    tresc.innerHTML = html;
+    znacznik.textContent = 'stan na ' + new Date(dane.pobrano).toLocaleString('pl-PL');
+  } catch (e) {
+    blad('Nie udało się połączyć', 'Sprawdź połączenie z internetem i spróbuj ponownie.');
+  } finally {
+    przyciskOdswiez.disabled = false;
+  }
+}
+
+przyciskOdswiez.addEventListener('click', wczytaj);
+wczytaj();
+</script>
+</body>
+</html>

@@ -3,52 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Znajdź partnera na siłownię. Wystawiasz ogłoszenie, ktoś się zgłasza, trenujecie.">
+<meta name="description" content="Znajdź partnera na siłownię. Wystawiasz ogłoszenie, ktoś się zgłasza, trenujecie razem.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0B0D10">
 <link rel="icon" href="favicon.png">
-<title>Find GymBro — znajdź partnera na siłownię</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="canonical" href="https://findgymbro.pl/">
+<meta property="og:url" content="https://findgymbro.pl/">
+<meta property="og:image" content="https://findgymbro.pl/img/ikona.png">
+<title>Find GymBro. Znajdź partnera na siłownię</title>
 <style>
+  /* Strona żyje w świecie aplikacji: ta sama ciemna paleta, ten sam akcent.
+     Jasnego motywu nie ma celowo — zrzuty z ciemnej aplikacji na jasnym tle
+     wyglądały jak okna wycięte z innego produktu. */
   :root {
-    --ground:  #FBFCFD;
-    --raised:  #FFFFFF;
-    --rule:    #E2E8ED;
-    --ink:     #12171C;
-    --ink-2:   #4A5764;
-    --ink-3:   #7C8894;
-    --accent:  #0E7A54;
-    --idle:    #C3CCD6;
-
-    /* Aplikacja jest wyłącznie ciemna — replika karty trzyma jej kolory
-       niezależnie od motywu strony. To okno do aplikacji, nie jej część. */
-    --app-surface: #14181D;
-    --app-rule:    #262D36;
-    --app-ink:     #F2F5F7;
-    --app-ink-2:   #9AA6B2;
-    --app-ink-3:   #5F6B78;
-    --app-accent:  #22C58B;
+    --ground:  #0B0D10;
+    --raised:  #14181D;
+    --pressed: #1B2129;
+    --rule:    #262D36;
+    --ink:     #F2F5F7;
+    --ink-2:   #9AA6B2;
+    --ink-3:   #5F6B78;
+    --accent:  #22C58B;
+    --accent-hi: #7CF5C9;
+    --accent-dim: rgba(34, 197, 139, .12);
 
     --sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", monospace;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
-      --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
-      --accent: #22C58B; --idle: #39434F;
-    }
-  }
-  :root[data-theme="dark"] {
-    --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
-    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
-    --accent: #22C58B; --idle: #39434F;
-  }
-  :root[data-theme="light"] {
-    --ground: #FBFCFD; --raised: #FFFFFF; --rule: #E2E8ED;
-    --ink: #12171C; --ink-2: #4A5764; --ink-3: #7C8894;
-    --accent: #0E7A54; --idle: #C3CCD6;
-  }
-
   * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
 
   body {
     margin: 0;
@@ -56,199 +42,538 @@
     color: var(--ink);
     font-family: var(--sans);
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ziarno na całości: zdejmuje sterylność płaskich wypełnień. */
+  body::after {
+    content: "";
+    position: fixed; inset: 0; z-index: 40;
+    pointer-events: none; opacity: .05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection { background: var(--accent); color: #06130D; }
+
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  /* Pasek postępu lektury: cienka zielona linia u samej góry. */
+  .postep {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 50;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hi));
+    transform: scaleX(0); transform-origin: left;
+    box-shadow: 0 0 10px rgba(34, 197, 139, .55);
+    pointer-events: none;
   }
 
   .wrap {
-    max-width: 58rem;
+    position: relative;
+    max-width: 64rem;
     margin: 0 auto;
-    padding: clamp(3rem, 9vw, 5.5rem) clamp(1.25rem, 5vw, 2rem) 4rem;
+    padding: clamp(3rem, 8vw, 5rem) clamp(1.25rem, 5vw, 2rem) 4rem;
     display: grid;
-    gap: clamp(3.5rem, 9vw, 6rem);
+    gap: clamp(4rem, 10vw, 6.5rem);
   }
 
-  /* ——— Znak ——— */
-  .hero { display: grid; gap: 1.35rem; justify-items: center; text-align: center; }
+  /* ——— Aurora ———
+     Plamy światła dryfują wzdłuż CAŁEJ strony, nie tylko w hero. */
+  .blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(70px); pointer-events: none; z-index: -2;
+    mix-blend-mode: screen;
+  }
+  .b1 { width: 34rem; height: 22rem; top: -3%;  left: 50%; translate: -70% 0;
+        background: radial-gradient(closest-side, rgba(34,197,139,.34), transparent 70%); }
+  .b2 { width: 26rem; height: 18rem; top: -1%;  left: 50%; translate: 10% 0;
+        background: radial-gradient(closest-side, rgba(124,245,201,.20), transparent 70%); }
+  .b3 { width: 30rem; height: 20rem; top: 8%;   left: 50%; translate: -30% 0;
+        background: radial-gradient(closest-side, rgba(14,122,84,.28), transparent 70%); }
+  .b4 { width: 30rem; height: 22rem; top: 38%;  left: -18%;
+        background: radial-gradient(closest-side, rgba(34,197,139,.20), transparent 70%); }
+  .b5 { width: 28rem; height: 20rem; top: 58%;  right: -16%;
+        background: radial-gradient(closest-side, rgba(124,245,201,.14), transparent 70%); }
+  .b6 { width: 32rem; height: 22rem; top: 82%;  left: 8%;
+        background: radial-gradient(closest-side, rgba(14,122,84,.22), transparent 70%); }
 
-  /* Proporcje 9,51:1 — logotyp jest szeroki, więc skalujemy szerokością. */
-  .mark { width: min(280px, 62vw); height: auto; display: block; }
+  /* ——— Scena hero ——— */
+  .hero-stage { position: relative; display: grid; gap: clamp(2.5rem, 6vw, 4rem); }
+
+  .floor {
+    position: absolute; left: -14%; right: -14%; bottom: -7rem; height: 24rem;
+    z-index: -1; pointer-events: none;
+    background:
+      repeating-linear-gradient(90deg, rgba(34,197,139,.16) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(0deg,  rgba(34,197,139,.12) 0 1px, transparent 1px 48px);
+    transform: perspective(640px) rotateX(63deg);
+    transform-origin: 50% 0;
+    -webkit-mask-image: linear-gradient(transparent 4%, #000 42%, transparent 96%);
+            mask-image: linear-gradient(transparent 4%, #000 42%, transparent 96%);
+  }
+
+  .hero { display: grid; gap: 1.4rem; justify-items: center; text-align: center; }
+
+  .mark { width: min(300px, 64vw); height: auto; display: block; }
 
   h1 {
-    font-size: clamp(1.9rem, 5.5vw, 2.85rem);
-    font-weight: 640; letter-spacing: -.03em; line-height: 1.1;
-    text-wrap: balance; margin: 0; max-width: 18ch;
+    font-size: clamp(2.1rem, 6.5vw, 3.4rem);
+    font-weight: 700; letter-spacing: -.035em; line-height: 1.06;
+    text-wrap: balance; margin: 0; max-width: 16ch;
+  }
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hi) 45%, var(--accent) 90%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
   }
 
   .lede {
-    font-size: clamp(1rem, 2.2vw, 1.12rem);
-    color: var(--ink-2); margin: 0; max-width: 40ch;
+    font-size: clamp(1.02rem, 2.3vw, 1.18rem);
+    color: var(--ink-2); margin: 0; max-width: 44ch;
   }
 
   .facts {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.25rem;
-    font-family: var(--mono); font-size: .76rem; color: var(--ink-3);
-    margin: .35rem 0 0; padding: 0; list-style: none;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .55rem;
+    margin: .5rem 0 0; padding: 0; list-style: none;
   }
-  .facts b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .facts li {
+    font-family: var(--mono); font-size: .74rem; color: var(--ink-2);
+    border: 1px solid var(--rule); border-radius: 99px;
+    padding: .38rem .85rem; background: rgba(20, 24, 29, .6);
+    backdrop-filter: blur(4px);
+  }
+  .facts b { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  /* ——— Zrzuty ekranu ——— */
+  /* ——— Telefony ——— */
   .shots {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: clamp(1rem, 3vw, 1.75rem);
-    margin: 0; padding: 0; list-style: none;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: clamp(1.25rem, 3.5vw, 2rem);
+    align-items: end;
+    margin: 0; padding: 0 clamp(0rem, 2vw, 1rem); list-style: none;
   }
-  .shots li { display: grid; gap: .7rem; }
-  .shot {
+  .shots li { display: grid; gap: .8rem; justify-items: center; }
+
+  .phone {
+    width: 100%;
+    border-radius: clamp(26px, 5vw, 38px);
+    border: 1px solid var(--rule);
+    background: #05070A;
+    padding: clamp(6px, 1vw, 9px);
+    box-shadow:
+      0 24px 60px -24px rgba(0, 0, 0, .85),
+      0 0 40px -18px rgba(34, 197, 139, .35),
+      0 0 0 1px rgba(255, 255, 255, .015) inset;
+    position: relative;
+    transition: box-shadow .3s;
+  }
+  .phone .screen {
+    border-radius: clamp(20px, 4vw, 30px);
+    overflow: hidden;
     aspect-ratio: 9 / 19.5;
-    border: 1px solid var(--rule); border-radius: 18px;
-    overflow: hidden; background: var(--raised);
-    display: grid; place-items: center;
+    background: var(--raised);
+    position: relative;
   }
-  .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .shot.empty { border-style: dashed; padding: 1.5rem; }
-  .shot.empty span {
-    font-family: var(--mono); font-size: .64rem; line-height: 1.5;
-    color: var(--ink-3); text-align: center;
+  .phone .screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .phone::after {                       /* wyspa aparatu */
+    content: "";
+    position: absolute; top: clamp(12px, 2vw, 17px); left: 50%;
+    translate: -50% 0;
+    width: 22%; height: clamp(9px, 1.6vw, 13px);
+    border-radius: 99px; background: #05070A;
+    z-index: 2;
   }
-  .shots .cap { font-size: .84rem; color: var(--ink-3); text-align: center; margin: 0; }
+  .screen::after {                      /* okresowy przebłysk światła */
+    content: "";
+    position: absolute; inset: -30%;
+    background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.10) 50%, transparent 58%);
+    translate: -130% 0;
+  }
+
+  @media (min-width: 44rem) {
+    .shots li:first-child .phone { rotate: -2.6deg; translate: 0 10px; }
+    .shots li:last-child  .phone { rotate:  2.6deg; translate: 0 10px; }
+    .shots li:nth-child(2) { z-index: 1; }
+    .shots li:nth-child(2) .phone { scale: 1.045; }
+  }
+
+  .shots .cap { font-size: .85rem; color: var(--ink-3); text-align: center; margin: 0; }
+
+  /* ——— Pasek miast ——— */
+  .ticker {
+    overflow: hidden;
+    border-block: 1px solid var(--rule);
+    padding-block: .7rem;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10% 90%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 10% 90%, transparent);
+  }
+  .ticker .tor {
+    display: flex; gap: 2.6rem; width: max-content;
+    font-family: var(--mono); font-size: .72rem; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3); white-space: nowrap;
+  }
+  .ticker b { color: var(--accent); font-weight: 600; }
+  .ticker i { font-style: normal; color: var(--rule); }
 
   /* ——— Sekcje ——— */
-  section { display: grid; gap: 1.75rem; }
+  section { display: grid; gap: 2rem; }
+  .head { display: grid; gap: .5rem; max-width: 34rem; }
   .eyebrow {
     font-family: var(--mono);
-    font-size: .7rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--accent); margin: 0; text-align: center;
+    font-size: .7rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0;
+    display: flex; align-items: center; gap: .55rem;
+  }
+  .eyebrow::before {
+    content: ""; width: .5rem; height: .5rem; border-radius: 99px;
+    background: var(--accent); box-shadow: 0 0 10px rgba(34,197,139,.7);
   }
   h2 {
-    font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 620; letter-spacing: -.02em;
-    margin: -.9rem 0 0; text-wrap: balance; text-align: center;
+    font-size: clamp(1.45rem, 3.6vw, 2rem); font-weight: 680; letter-spacing: -.025em;
+    line-height: 1.15; margin: 0; text-wrap: balance;
   }
 
-  /* Numeracja oddaje faktyczną kolejność kroków, nie zdobi. */
-  .steps { display: grid; gap: 1.75rem; margin: 0; padding: 0; list-style: none; }
-  @media (min-width: 44rem) { .steps { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
-  .steps li { display: grid; gap: .4rem; align-content: start; }
+  /* Kroki: tor z paskiem, który ładuje się przy wjeździe sekcji. */
+  .steps { display: grid; gap: 1.9rem; margin: 0; padding: 0; list-style: none; counter-reset: krok; }
+  @media (min-width: 44rem) { .steps { grid-template-columns: repeat(3, 1fr); gap: 2.25rem; } }
+  .steps li {
+    display: grid; gap: .55rem; align-content: start;
+    padding-top: 1.15rem; position: relative; counter-increment: krok;
+  }
+  .steps li::before {                    /* tor */
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; border-radius: 2px; background: var(--rule);
+  }
+  .steps li .pasek {                     /* wypełnienie */
+    position: absolute; top: 0; left: 0;
+    width: 2.4rem; height: 2px; border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(34, 197, 139, .6);
+  }
   .steps .n { font-family: var(--mono); font-size: .72rem; color: var(--accent); font-weight: 600; }
-  .steps h3 { font-size: 1rem; font-weight: 620; margin: 0; }
-  .steps p { margin: 0; font-size: .93rem; color: var(--ink-2); }
+  .steps .n::before { content: counter(krok, decimal-leading-zero); }
+  .steps h3 { font-size: 1.05rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+  .steps p { margin: 0; font-size: .94rem; color: var(--ink-2); }
 
-  .cols { display: grid; gap: 1.6rem; }
-  @media (min-width: 44rem) { .cols { grid-template-columns: 1fr 1fr; gap: 1.75rem 2.25rem; } }
-  .cols h3 { font-size: .98rem; font-weight: 620; margin: 0 0 .35rem; }
-  .cols p { margin: 0; font-size: .93rem; color: var(--ink-2); }
-
-  /* ——— Pobranie ——— */
-  .get {
-    display: grid; gap: 1.5rem; justify-items: center; text-align: center;
+  /* Karty funkcji: powierzchnie aplikacji z narożnikami jak w wizjerze
+     i przebłyskiem sunącym po każdej z osobna. */
+  .cards { display: grid; gap: 1rem; }
+  @media (min-width: 44rem) { .cards { grid-template-columns: 1fr 1fr; } }
+  .card {
     border: 1px solid var(--rule); border-radius: 16px;
-    padding: clamp(1.75rem, 5vw, 2.75rem);
     background: var(--raised);
+    padding: 1.35rem 1.4rem 1.45rem;
+    display: grid; gap: .45rem; align-content: start;
+    position: relative; overflow: hidden;
+    transition: border-color .3s, translate .3s, box-shadow .3s;
+  }
+  .card::before, .card::after {
+    content: ""; position: absolute; width: 13px; height: 13px;
+    opacity: 0; transition: opacity .3s, width .3s, height .3s;
+    pointer-events: none; z-index: 2;
+  }
+  .card::before { top: 9px; left: 9px; border-top: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); border-top-left-radius: 8px; }
+  .card::after { bottom: 9px; right: 9px; border-bottom: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); border-bottom-right-radius: 8px; }
+  .card:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
+    translate: 0 -3px;
+    box-shadow: 0 14px 34px -18px rgba(34, 197, 139, .35);
+  }
+  .card:hover::before, .card:hover::after { opacity: 1; width: 19px; height: 19px; }
+  .card .lsn {                            /* przebłysk */
+    position: absolute; inset: -40%;
+    background: linear-gradient(115deg, transparent 44%, rgba(124, 245, 201, .05) 50%, transparent 56%);
+    translate: -140% 0; pointer-events: none;
+  }
+  .card .dot {
+    width: .55rem; height: .55rem; border-radius: 99px;
+    background: var(--accent); box-shadow: 0 0 12px rgba(34, 197, 139, .55);
+    margin-bottom: .4rem;
+  }
+  .card h3 { font-size: 1rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+  .card p { margin: 0; font-size: .93rem; color: var(--ink-2); }
+
+  /* Bezpieczeństwo: tablica ze skanem przebiegającym z góry na dół,
+     ptaszki wskakują kolejno przy wjeździe. */
+  .safety {
+    border: 1px solid var(--rule); border-radius: 20px;
+    background: linear-gradient(180deg, var(--raised), var(--ground) 140%);
+    padding: clamp(1.5rem, 4vw, 2.4rem);
+    display: grid; gap: 1.8rem;
+    position: relative; overflow: hidden;
+  }
+  .safety .glow {
+    position: absolute; inset: -40% -20% auto; height: 18rem;
+    background: radial-gradient(closest-side, rgba(34, 197, 139, .10), transparent 70%);
+    pointer-events: none;
+  }
+  .safety .skan {
+    position: absolute; left: 0; right: 0; top: -2px; height: 2px;
+    background: linear-gradient(90deg, transparent 6%, rgba(34, 197, 139, .55), transparent 94%);
+    box-shadow: 0 0 14px rgba(34, 197, 139, .35);
+    opacity: 0; pointer-events: none;
+  }
+  .safety .grid { display: grid; gap: 1.5rem; }
+  @media (min-width: 44rem) { .safety .grid { grid-template-columns: 1fr 1fr; gap: 1.6rem 2.5rem; } }
+  .safety .item { display: grid; grid-template-columns: auto 1fr; gap: .85rem; align-items: start; }
+  .safety .tick {
+    width: 1.35rem; height: 1.35rem; border-radius: 99px; flex: none;
+    background: var(--accent-dim); color: var(--accent);
+    display: grid; place-items: center; margin-top: .1rem;
+    font-size: .8rem; font-weight: 700;
+  }
+  .safety h3 { font-size: .98rem; font-weight: 650; margin: 0 0 .25rem; letter-spacing: -.01em; }
+  .safety p { margin: 0; font-size: .93rem; color: var(--ink-2); }
+
+  /* ——— Pobranie: laser skanujący kod QR ——— */
+  .get {
+    position: relative;
+    display: grid; gap: 1.5rem; justify-items: center; text-align: center;
+    border: 1px solid var(--rule); border-radius: 20px;
+    padding: clamp(2rem, 5vw, 3rem);
+    background: var(--raised);
+    overflow: hidden;
+  }
+  .get .glow {
+    position: absolute; inset: auto -20% -70% -20%; height: 16rem;
+    background: radial-gradient(closest-side, rgba(34, 197, 139, .14), transparent 70%);
+    pointer-events: none;
   }
   .get h2 { margin: 0; }
-  .get p { margin: 0; color: var(--ink-2); font-size: .94rem; max-width: 34ch; }
+  .get p { margin: 0; color: var(--ink-2); font-size: .95rem; max-width: 36ch; }
   .qr {
-    width: 164px; height: 164px;
-    border: 1.5px dashed var(--rule); border-radius: 12px;
+    width: 158px; height: 158px;
+    border: 1.5px dashed var(--rule); border-radius: 14px;
     display: grid; place-items: center; padding: 1rem;
+    background: var(--ground);
+    position: relative; overflow: hidden;
   }
   .qr img { width: 100%; height: 100%; display: block; }
   .qr span {
     font-family: var(--mono); font-size: .64rem; line-height: 1.5;
     color: var(--ink-3); text-align: center;
   }
+  .qr .laser {
+    position: absolute; left: 7%; right: 7%; top: 10%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 12px rgba(34, 197, 139, .8);
+    pointer-events: none;
+  }
 
+  /* Ozdobna linia nad stopką reaguje pulsem, stopka bez zmian. */
   footer {
-    border-top: 1px solid var(--rule); padding-top: 1.5rem;
+    border-top: 1px solid var(--rule); padding-top: 1.6rem;
     display: flex; flex-wrap: wrap; gap: .5rem 1.5rem;
     font-size: .82rem; color: var(--ink-3);
   }
   footer a { color: var(--ink-2); text-decoration: none; text-underline-offset: .18em; }
   footer a:hover, footer a:focus-visible { color: var(--accent); text-decoration: underline; }
   footer .spacer { flex: 1 1 auto; }
+  footer .status { display: inline-flex; align-items: center; gap: .45rem; }
+  footer .status::before {
+    content: ""; width: .45rem; height: .45rem; border-radius: 99px;
+    background: var(--accent); box-shadow: 0 0 8px rgba(34, 197, 139, .7);
+  }
 
-  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  /* ——— Ruch ———
+     Wszystko, co się porusza, siedzi pod jedną bramką: przy ograniczeniu
+     animacji strona jest w pełni statyczna i kompletna. */
+  @media (prefers-reduced-motion: no-preference) {
+    .rev { opacity: 0; translate: 0 22px; transition: opacity .6s ease, translate .6s ease; }
+    .rev.in { opacity: 1; translate: 0 0; }
+    .steps li.rev:nth-child(2), .cards .card.rev:nth-child(2) { transition-delay: .1s; }
+    .steps li.rev:nth-child(3), .cards .card.rev:nth-child(3) { transition-delay: .2s; }
+    .cards .card.rev:nth-child(4) { transition-delay: .3s; }
+    .shots li.rev:nth-child(1) { transition-delay: .05s; }
+    .shots li.rev:nth-child(2) { transition-delay: .15s; }
+    .shots li.rev:nth-child(3) { transition-delay: .25s; }
+
+    .b1 { animation: dryf1 21s ease-in-out infinite alternate; }
+    .b2 { animation: dryf2 17s ease-in-out infinite alternate; }
+    .b3 { animation: dryf3 25s ease-in-out infinite alternate; }
+    .b4 { animation: dryf2 23s ease-in-out infinite alternate; }
+    .b5 { animation: dryf3 19s ease-in-out infinite alternate; }
+    .b6 { animation: dryf1 27s ease-in-out infinite alternate; }
+    @keyframes dryf1 { to { translate: -38% 9%;  scale: 1.18; } }
+    @keyframes dryf2 { to { translate: 14% -8%;  scale: .88; } }
+    @keyframes dryf3 { to { translate: -12% 11%; scale: 1.12; } }
+
+    .floor { animation: sunie 2.8s linear infinite; }
+    @keyframes sunie { to { background-position: 0 0, 0 48px; } }
+
+    h1 em { animation: przelot 7s linear infinite; }
+    @keyframes przelot { to { background-position: 220% 0; } }
+
+    .screen::after { animation: blysk 7.5s ease-in-out infinite; }
+    .shots li:nth-child(2) .screen::after { animation-delay: 1.1s; }
+    .shots li:nth-child(3) .screen::after { animation-delay: 2.2s; }
+    @keyframes blysk { 0%, 74% { translate: -130% 0; } 92%, 100% { translate: 130% 0; } }
+
+    .card .lsn { animation: blysk 9s ease-in-out infinite; }
+    .cards .card:nth-child(2) .lsn { animation-delay: 1.4s; }
+    .cards .card:nth-child(3) .lsn { animation-delay: 2.8s; }
+    .cards .card:nth-child(4) .lsn { animation-delay: 4.2s; }
+
+    .ticker .tor { animation: przewijaj 34s linear infinite; }
+    .ticker:hover .tor { animation-play-state: paused; }
+    @keyframes przewijaj { to { translate: -50% 0; } }
+
+    .eyebrow::before, .card .dot { animation: puls 2.8s ease-in-out infinite; }
+    @keyframes puls { 50% { box-shadow: 0 0 3px rgba(34,197,139,.25); } }
+
+    /* Kroki: pasek dojeżdża do 2,4 rem dopiero po wjeździe elementu. */
+    .steps li .pasek { transform: scaleX(0); transform-origin: left; transition: transform .7s ease .25s; }
+    .steps li.in .pasek { transform: scaleX(1); }
+    .steps li:nth-child(2) .pasek { transition-delay: .4s; }
+    .steps li:nth-child(3) .pasek { transition-delay: .55s; }
+
+    /* Bezpieczeństwo: ptaszki wskakują kolejno, skan przebiega co kilka sekund. */
+    .safety .tick { scale: 0; transition: scale .5s cubic-bezier(.2, 1.6, .4, 1); }
+    .safety.in .tick { scale: 1; }
+    .safety.in .item:nth-child(2) .tick { transition-delay: .12s; }
+    .safety.in .item:nth-child(3) .tick { transition-delay: .24s; }
+    .safety.in .item:nth-child(4) .tick { transition-delay: .36s; }
+    .safety .skan { animation: skanuj 6.5s ease-in-out infinite; }
+    @keyframes skanuj {
+      0%, 12%  { top: -2px;  opacity: 0; }
+      18%      { opacity: 1; }
+      46%      { top: 100%; opacity: 1; }
+      52%, 100%{ top: 100%; opacity: 0; }
+    }
+
+    .qr .laser { animation: skan-qr 2.6s ease-in-out infinite alternate; }
+    @keyframes skan-qr { to { top: 88%; } }
+
+    .qr { animation: obwod 3.2s ease-in-out infinite; }
+    @keyframes obwod { 50% { border-color: color-mix(in srgb, var(--accent) 55%, var(--rule)); } }
+
+    footer .status::before { animation: puls 2.2s ease-in-out infinite; }
+  }
 </style>
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="canonical" href="https://findgymbro.pl/">
-  <meta property="og:url" content="https://findgymbro.pl/">
-  <meta property="og:image" content="https://findgymbro.pl/img/ikona.png">
 </head>
 <body>
+<span class="postep" aria-hidden="true"></span>
 <div class="wrap">
 
-  <header class="hero">
-    <!-- Logotyp w krzywych: żadnej czcionki do pobrania,
-         wygląda identycznie wszędzie. „FIND" dziedziczy kolor motywu. -->
-    <img class="mark" src="img/logo.png" alt="Find GymBro" width="760" height="111">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+  <span class="blob b4"></span>
+  <span class="blob b5"></span>
+  <span class="blob b6"></span>
 
-    <h1>Znajdź partnera na siłownię.</h1>
-    <p class="lede">
-      Wystawiasz ogłoszenie: siłownia, godzina, co trenujesz. Kto chce — zgłasza się,
-      a ty decydujesz, z kim idziesz.
-    </p>
-    <ul class="facts">
-      <li><b>1741</b> siłowni</li>
-      <li><b>239</b> miast</li>
-      <li>bez opłat</li>
+  <div class="hero-stage">
+    <span class="floor" aria-hidden="true"></span>
+
+    <header class="hero">
+      <!-- Logotyp w krzywych: żadnej czcionki do pobrania,
+           wygląda identycznie wszędzie. -->
+      <img class="mark" src="img/logo.png" alt="Find GymBro" width="760" height="111">
+
+      <h1>Trenuj <em>z kimś</em>, nie obok kogoś.</h1>
+      <p class="lede">
+        Wystawiasz ogłoszenie: siłownia, godzina i to, co trenujesz.
+        Ktoś się zgłasza, ty wybierasz i idziecie razem.
+      </p>
+      <ul class="facts">
+        <li><b data-cel="1741">1741</b> siłowni</li>
+        <li><b data-cel="239">239</b> miast</li>
+        <li>bez opłat i reklam</li>
+      </ul>
+    </header>
+
+    <ul class="shots">
+      <li class="rev">
+        <div class="phone"><div class="screen"><img src="img/lista.png" alt="Lista osób szukających partnera na dziś" loading="lazy"></div></div>
+        <p class="cap">Kto szuka partnera dziś</p>
+      </li>
+      <li class="rev">
+        <div class="phone"><div class="screen"><img src="img/nowe-ogloszenie.png" alt="Formularz nowego ogłoszenia" loading="lazy"></div></div>
+        <p class="cap">Ogłoszenie w kilkanaście sekund</p>
+      </li>
+      <li class="rev">
+        <div class="phone"><div class="screen"><img src="img/plan-treningu.png" alt="Wspólny plan treningu z ciężarami obu osób" loading="lazy"></div></div>
+        <p class="cap">Wspólny plan i ciężary obu osób</p>
+      </li>
     </ul>
-  </header>
+  </div>
 
-  <ul class="shots">
-    <li>
-      <div class="shot"><img src="img/lista.png" alt="Kto szuka partnera dziś" loading="lazy"></div>
-      <p class="cap">Kto szuka partnera dziś</p>
-    </li>
-    <li>
-      <div class="shot"><img src="img/nowe-ogloszenie.png" alt="Wystawiasz w kilkanaście sekund" loading="lazy"></div>
-      <p class="cap">Wystawiasz w kilkanaście sekund</p>
-    </li>
-    <li>
-      <div class="shot"><img src="img/plan-treningu.png" alt="Wspólny plan i ciężary obu osób" loading="lazy"></div>
-      <p class="cap">Wspólny plan i ciężary obu osób</p>
-    </li>
-  </ul>
+  <!-- Zawartość toru jest zdublowana, żeby pętla nie miała szwu. -->
+  <div class="ticker" aria-hidden="true">
+    <div class="tor">
+      <span>Warszawa</span><i>▸</i><span>Kraków</span><i>▸</i><span>Gdańsk</span><i>▸</i>
+      <span>Wrocław</span><i>▸</i><span>Poznań</span><i>▸</i><span>Katowice</span><i>▸</i>
+      <span>Łódź</span><i>▸</i><span>Szczecin</span><i>▸</i><span>Lublin</span><i>▸</i>
+      <span><b>1741 siłowni</b></span><i>▸</i><span>Rzeszów</span><i>▸</i><span>Białystok</span><i>▸</i>
+      <span>Bydgoszcz</span><i>▸</i><span>Gdynia</span><i>▸</i><span>Częstochowa</span><i>▸</i>
+      <span><b>239 miast</b></span><i>▸</i>
+      <span>Warszawa</span><i>▸</i><span>Kraków</span><i>▸</i><span>Gdańsk</span><i>▸</i>
+      <span>Wrocław</span><i>▸</i><span>Poznań</span><i>▸</i><span>Katowice</span><i>▸</i>
+      <span>Łódź</span><i>▸</i><span>Szczecin</span><i>▸</i><span>Lublin</span><i>▸</i>
+      <span><b>1741 siłowni</b></span><i>▸</i><span>Rzeszów</span><i>▸</i><span>Białystok</span><i>▸</i>
+      <span>Bydgoszcz</span><i>▸</i><span>Gdynia</span><i>▸</i><span>Częstochowa</span><i>▸</i>
+      <span><b>239 miast</b></span><i>▸</i>
+    </div>
+  </div>
 
   <section>
-    <p class="eyebrow">Jak to działa</p>
-    <h2>Trzy kroki i jesteście umówieni</h2>
+    <div class="head rev">
+      <p class="eyebrow">Jak to działa</p>
+      <h2>Trzy kroki i jesteście umówieni</h2>
+    </div>
     <ol class="steps">
-      <li>
-        <span class="n">01</span>
+      <li class="rev">
+        <span class="pasek"></span>
+        <span class="n"></span>
         <h3>Wystawiasz ogłoszenie</h3>
-        <p>Siłownia, dzień, godziny, partie. Kilkanaście sekund.</p>
+        <p>Siłownia, dzień, godziny i partie. Zajmuje kilkanaście sekund.</p>
       </li>
-      <li>
-        <span class="n">02</span>
+      <li class="rev">
+        <span class="pasek"></span>
+        <span class="n"></span>
         <h3>Ktoś się zgłasza</h3>
-        <p>Widzisz profil, staż i ciężary. Przyjmujesz albo nie — bez tłumaczenia się.</p>
+        <p>Zanim zdecydujesz, widzisz profil, staż i ciężary. Przyjmujesz albo odrzucasz bez tłumaczenia się.</p>
       </li>
-      <li>
-        <span class="n">03</span>
+      <li class="rev">
+        <span class="pasek"></span>
+        <span class="n"></span>
         <h3>Trenujecie</h3>
-        <p>Otwiera się rozmowa, trening ląduje w kalendarzu obojga.</p>
+        <p>Otwiera się rozmowa, a trening ląduje w kalendarzu obojga.</p>
       </li>
     </ol>
   </section>
 
   <section>
-    <p class="eyebrow">Co jest w środku</p>
-    <h2>Rzeczy, które realnie się przydają</h2>
-    <div class="cols">
-      <div>
+    <div class="head rev">
+      <p class="eyebrow">Co jest w środku</p>
+      <h2>Rzeczy, które realnie się przydają</h2>
+    </div>
+    <div class="cards">
+      <div class="card rev">
+        <span class="lsn"></span>
+        <span class="dot"></span>
         <h3>Wspólny plan treningu</h3>
-        <p>Ćwiczenia, ciężary i to, kto kogo asekuruje — ustalone, zanim wejdziecie na salę. Zmiany widać u obojga od razu.</p>
+        <p>Ćwiczenia, ciężary i asekuracja ustalone, zanim wejdziecie na salę. Zmiany widać u obojga od razu.</p>
       </div>
-      <div>
+      <div class="card rev">
+        <span class="lsn"></span>
+        <span class="dot"></span>
         <h3>Potwierdzanie obecności</h3>
-        <p>Jesteś przy obiekcie, dotykasz przycisku, obecność zapisana. Twoja pozycja nigdzie nie trafia — liczymy tylko odległość.</p>
+        <p>Stajesz przy obiekcie i dotykasz przycisku. Liczymy tylko odległość, twoja pozycja nigdzie nie trafia.</p>
       </div>
-      <div>
+      <div class="card rev">
+        <span class="lsn"></span>
+        <span class="dot"></span>
         <h3>Kilka siłowni naraz</h3>
-        <p>Karta wielu obiektów to norma. Zaznaczasz do czterech, ogłoszenia dopasowują się do wszystkich.</p>
+        <p>Masz kartę wielu obiektów? Zaznaczasz do czterech, a ogłoszenia dopasowują się do wszystkich.</p>
       </div>
-      <div>
+      <div class="card rev">
+        <span class="lsn"></span>
+        <span class="dot"></span>
         <h3>Ulubieni partnerzy</h3>
         <p>Z kimś dobrze się trenowało? Umówisz się ponownie jednym dotknięciem.</p>
       </div>
@@ -256,45 +581,123 @@
   </section>
 
   <section>
-    <p class="eyebrow">Bezpieczeństwo</p>
-    <h2>Umawiasz się z obcą osobą — i wiemy o tym</h2>
-    <div class="cols">
-      <div>
-        <h3>Blokada działa natychmiast</h3>
-        <p>W obie strony: rozmowa się zamyka, umówione treningi zostają odwołane, osoba znika z twoich wyników.</p>
+    <div class="safety rev">
+      <span class="glow"></span>
+      <span class="skan"></span>
+      <div class="head">
+        <p class="eyebrow">Bezpieczeństwo</p>
+        <h2>Umawiasz się z obcą osobą. Wiemy o tym.</h2>
       </div>
-      <div>
-        <h3>Ogłoszenia tylko dla jednej płci</h3>
-        <p>Możesz skierować ogłoszenie wyłącznie do kobiet albo wyłącznie do mężczyzn.</p>
-      </div>
-      <div>
-        <h3>Zgłoszenia czyta człowiek</h3>
-        <p>Odpowiadamy w 48 godzin w dni robocze. Sprawy dotyczące bezpieczeństwa — niezwłocznie.</p>
-      </div>
-      <div>
-        <h3>Aplikacja od 18 lat</h3>
-        <p>Prowadzi do spotkań w realnym świecie, więc nie jest miejscem dla nieletnich.</p>
+      <div class="grid">
+        <div class="item">
+          <span class="tick">✓</span>
+          <div>
+            <h3>Blokada działa natychmiast</h3>
+            <p>W obie strony: rozmowa się zamyka, umówione treningi zostają odwołane, a osoba znika z twoich wyników.</p>
+          </div>
+        </div>
+        <div class="item">
+          <span class="tick">✓</span>
+          <div>
+            <h3>Ogłoszenia tylko dla jednej płci</h3>
+            <p>Możesz skierować ogłoszenie wyłącznie do kobiet albo wyłącznie do mężczyzn.</p>
+          </div>
+        </div>
+        <div class="item">
+          <span class="tick">✓</span>
+          <div>
+            <h3>Filtr działa, zanim treść trafi do innych</h3>
+            <p>Obelgi i groźby zatrzymujemy przed publikacją, a zgłoszenia czyta człowiek. W sprawach bezpieczeństwa reagujemy niezwłocznie.</p>
+          </div>
+        </div>
+        <div class="item">
+          <span class="tick">✓</span>
+          <div>
+            <h3>Aplikacja od 18 lat</h3>
+            <p>Prowadzi do spotkań w prawdziwym świecie, więc nie jest miejscem dla nieletnich.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <div class="get">
+  <div class="get rev">
+    <span class="glow"></span>
     <div class="qr" aria-label="Kod QR pojawi się po publikacji w App Store">
       <span>KOD QR<br>PO PUBLIKACJI</span>
+      <span class="laser" aria-hidden="true"></span>
     </div>
     <div>
       <h2>Wkrótce w App Store</h2>
-      <p>Zeskanuj kod telefonem, gdy aplikacja trafi do sklepu.</p>
+      <p>Zeskanuj kod telefonem, gdy aplikacja pojawi się w sklepie.</p>
     </div>
   </div>
 
   <footer>
-    <a href="mailto:kontakt@findgymbro.pl">kontakt@findgymbro.pl</a>
+    <a class="status" href="mailto:kontakt@findgymbro.pl">kontakt@findgymbro.pl</a>
     <span class="spacer"></span>
     <a href="prywatnosc.html">Polityka prywatności</a>
     <a href="prywatnosc.html#r11">Regulamin</a>
   </footer>
 
 </div>
+
+<script>
+  const ruchOk = matchMedia('(prefers-reduced-motion: no-preference)').matches;
+
+  // Wjazd sekcji przy przewijaniu.
+  if (ruchOk) {
+    const obs = new IntersectionObserver((wpisy) => {
+      for (const w of wpisy) if (w.isIntersecting) { w.target.classList.add('in'); obs.unobserve(w.target); }
+    }, { rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.rev').forEach((el) => obs.observe(el));
+  } else {
+    document.querySelectorAll('.rev').forEach((el) => el.classList.add('in'));
+  }
+
+  // Liczniki w hero nabijają się jak ciężar na sztandze: szybko, potem hamują.
+  if (ruchOk) {
+    document.querySelectorAll('[data-cel]').forEach((el) => {
+      const cel = parseInt(el.dataset.cel, 10);
+      const start = performance.now();
+      const czas = 1400;
+      const krok = (t) => {
+        const u = Math.min((t - start) / czas, 1);
+        el.textContent = Math.round(cel * (1 - Math.pow(1 - u, 3)));
+        if (u < 1) requestAnimationFrame(krok);
+      };
+      requestAnimationFrame(krok);
+    });
+  }
+
+  // Pasek postępu lektury.
+  if (ruchOk) {
+    const pasek = document.querySelector('.postep');
+    let czeka = false;
+    const odswiez = () => {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      pasek.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+      czeka = false;
+    };
+    addEventListener('scroll', () => {
+      if (!czeka) { czeka = true; requestAnimationFrame(odswiez); }
+    }, { passive: true });
+    odswiez();
+  }
+
+  // Telefony i karty pochylają się za kursorem. Tylko przy prawdziwej myszy:
+  // na dotyku przechył bez kursora wyglądałby jak drganie.
+  if (ruchOk && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.querySelectorAll('.phone, .card').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - .5;
+        const y = (e.clientY - r.top) / r.height - .5;
+        el.style.transform = `perspective(700px) rotateY(${x * 5}deg) rotateX(${y * -5}deg)`;
+      });
+      el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+    });
+  }
+</script>
 </body>
 </html>
