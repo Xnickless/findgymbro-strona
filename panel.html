@@ -130,6 +130,37 @@
   .miasto .wypelnienie { height: 100%; border-radius: 99px; background: var(--accent); }
   .miasto.bez-masy .wypelnienie { background: var(--ink-3); }
 
+  /* ——— Lista kont ——— */
+  .konta { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; min-width: 44rem; }
+  th {
+    text-align: left; font-family: var(--mono); font-size: .68rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
+    padding: .9rem 1rem .6rem; border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  td { padding: .7rem 1rem; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); vertical-align: baseline; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+  td.liczbowa { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  td .mail { color: var(--ink-3); font-size: .78rem; display: block; }
+  .znak {
+    display: inline-block; font-family: var(--mono); font-size: .66rem; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: .12rem .45rem; border-radius: 5px; white-space: nowrap;
+  }
+  .znak.uzytkownik   { color: var(--accent);  background: rgba(34,197,139,.12); }
+  .znak.administrator{ color: #8AB4F8;        background: rgba(138,180,248,.12); }
+  .znak.recenzja     { color: var(--ostrzez); background: rgba(232,163,61,.12); }
+  .znak.statysta     { color: var(--ink-3);   background: rgba(154,166,178,.10); }
+  .znak.ban          { color: var(--blad);    background: rgba(255,90,78,.14); }
+  .filtr { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .85rem; }
+  .filtr button {
+    font: inherit; font-size: .78rem; color: var(--ink-2);
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 99px;
+    padding: .28rem .8rem; cursor: pointer;
+  }
+  .filtr button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
   .wykres { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); padding: 1.15rem 1.25rem 1rem; }
   .wykres h3 { font-size: .92rem; font-weight: 650; margin: 0 0 .15rem; }
   .wykres .pod { font-size: .78rem; color: var(--ink-3); margin: 0 0 1rem; }
@@ -173,7 +204,7 @@
   </header>
   <div id="tresc"></div>
   <footer>
-    Panel prywatny. Liczby zbiorcze, bez danych osobowych.
+    Panel administracyjny. Zawiera dane użytkowników — nie udostępniaj tej strony.
     <a href="/">findgymbro.pl</a>
   </footer>
 </div>
@@ -271,6 +302,61 @@ function miasta(lista) {
     `</div>`;
 }
 
+/** Data w formie „3 dni temu”, bo przy kontach liczy się świeżość, nie doba. */
+function kiedy(iso) {
+  if (!iso) return '—';
+  const minut = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (minut < 60) return minut <= 1 ? 'przed chwilą' : `${minut} min temu`;
+  const godzin = Math.round(minut / 60);
+  if (godzin < 24) return `${godzin} godz. temu`;
+  const dni = Math.round(godzin / 24);
+  if (dni < 31) return dni === 1 ? 'wczoraj' : `${dni} dni temu`;
+  return new Date(iso).toLocaleDateString('pl-PL');
+}
+
+let filtrKont = 'wszystkie';
+let ostatnieKonta = [];
+
+/**
+ * Lista kont.
+ *
+ * Świadomie oszczędna: imię, adres, aktywność i to, co dana osoba zrobiła
+ * w aplikacji. Bez ciężarów, opisu profilu i zdjęć — administrator ma widzieć,
+ * kto to jest i czy jest aktywny, a nie przeglądać cudze profile.
+ */
+function konta(lista) {
+  const licznik = lista.reduce((a, k) => (a[k.rodzaj] = (a[k.rodzaj] ?? 0) + 1, a), {});
+  const widoczne = filtrKont === 'wszystkie' ? lista : lista.filter((k) => k.rodzaj === filtrKont);
+
+  const filtry = ['wszystkie', 'użytkownik', 'administrator', 'recenzja', 'statysta']
+    .filter((r) => r === 'wszystkie' || licznik[r])
+    .map((r) => `<button data-filtr="${r}" aria-pressed="${r === filtrKont}">
+      ${r}${r === 'wszystkie' ? ` (${lista.length})` : ` (${licznik[r]})`}</button>`).join('');
+
+  const wiersze = widoczne.map((k) => `<tr>
+    <td>
+      <strong>${k.imie ?? '<span style="color:var(--ink-3)">bez profilu</span>'}</strong>
+      ${k.zbanowany ? '<span class="znak ban">ban</span>' : ''}
+      <span class="mail">${k.email}</span>
+    </td>
+    <td><span class="znak ${k.rodzaj.replace('ż', 'z')}">${k.rodzaj}</span></td>
+    <td>${k.miasto ?? '—'}</td>
+    <td class="liczbowa">${k.ogloszen}</td>
+    <td class="liczbowa">${k.zgloszen_wyslanych}</td>
+    <td class="liczbowa">${kiedy(k.ostatnia_aktywnosc)}</td>
+    <td class="liczbowa">${kiedy(k.utworzone)}</td>
+  </tr>`).join('');
+
+  return `<div class="filtr">${filtry}</div>
+    <div class="konta"><table>
+      <thead><tr>
+        <th>Kto</th><th>Rodzaj</th><th>Miasto</th>
+        <th>Ogł.</th><th>Zgł.</th><th>Aktywność</th><th>Konto od</th>
+      </tr></thead>
+      <tbody>${wiersze || '<tr><td colspan="7" style="color:var(--ink-3)">Brak kont w tej grupie.</td></tr>'}</tbody>
+    </table></div>`;
+}
+
 function wykres(historia, klucz, tytul, pod) {
   const punkty = historia.map((h) => ({ dzien: h.dzien, v: Number(h.miary?.[klucz] ?? 0) }))
                          .filter((p) => Number.isFinite(p.v));
@@ -352,6 +438,18 @@ async function wczytaj() {
       html += `<div class="grupa"><h2>Miasta</h2>${miasta(dane.geografia)}</div>`;
     }
 
+    if (dane.konta?.length) {
+      const prawdziwi = dane.konta.filter((k) => k.rodzaj === 'użytkownik').length;
+      const ostrzezenie = prawdziwi === 0
+        ? `<div class="komunikat"><h2>Same konta własne</h2>
+             <p>W bazie nie ma jeszcze ani jednego prawdziwego użytkownika. Statystyki powyżej
+             liczą również konta administracyjne, recenzenckie i statystów, więc lejek i konwersja
+             są na razie umowne.</p></div>`
+        : '';
+      html += `<div class="grupa"><h2>Konta</h2>${ostrzezenie}${konta(dane.konta)}</div>`;
+      ostatnieKonta = dane.konta;
+    }
+
     for (const g of GRUPY) {
       const kafle = g.miary.filter((k) => m[k]).map((k) => {
         const poprz = wczoraj?.[k];
@@ -412,6 +510,16 @@ formularz.addEventListener('submit', async (e) => {
   }
   document.getElementById('haslo').value = '';
   pokazPanel();
+});
+
+// Filtr kont przerysowuje samą tabelę, bez ponownego pytania serwera.
+tresc.addEventListener('click', (e) => {
+  const przycisk = e.target.closest('[data-filtr]');
+  if (!przycisk) return;
+  filtrKont = przycisk.dataset.filtr;
+  const grupa = przycisk.closest('.grupa');
+  const komunikat = grupa.querySelector('.komunikat')?.outerHTML ?? '';
+  grupa.innerHTML = `<h2>Konta</h2>${komunikat}${konta(ostatnieKonta)}`;
 });
 
 document.getElementById('odswiez').addEventListener('click', wczytaj);
