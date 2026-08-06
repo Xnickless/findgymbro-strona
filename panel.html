@@ -12,7 +12,7 @@
   :root {
     --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
     --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
-    --accent: #22C58B; --accent-hi: #7CF5C9; --ostrzez: #E8A33D;
+    --accent: #22C58B; --accent-hi: #7CF5C9; --ostrzez: #E8A33D; --blad: #FF5A4E;
     --sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", monospace;
   }
@@ -24,18 +24,48 @@
   }
   .wrap { max-width: 62rem; margin: 0 auto; padding: clamp(1.75rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem) 4rem; }
 
+  /* ——— Logowanie ——— */
+  .brama {
+    min-height: 100svh; display: grid; place-items: center;
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+  .brama form {
+    width: min(24rem, 100%);
+    border: 1px solid var(--rule); border-radius: 18px; background: var(--raised);
+    padding: clamp(1.75rem, 5vw, 2.25rem);
+    display: grid; gap: 1rem;
+    box-shadow: 0 30px 70px -40px rgba(0,0,0,.9);
+  }
+  .brama h1 { font-size: 1.2rem; font-weight: 680; letter-spacing: -.02em; margin: 0; }
+  .brama .pod { font-size: .88rem; color: var(--ink-2); margin: -.55rem 0 .3rem; }
+  label { display: grid; gap: .35rem; font-size: .8rem; color: var(--ink-2); }
+  input {
+    font: inherit; font-size: .95rem; color: var(--ink);
+    background: var(--ground); border: 1px solid var(--rule); border-radius: 10px;
+    padding: .7rem .85rem; width: 100%;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .glowny {
+    font: inherit; font-weight: 620; font-size: .95rem; color: #06130D;
+    background: var(--accent); border: 0; border-radius: 10px;
+    padding: .75rem 1rem; cursor: pointer; margin-top: .25rem;
+  }
+  .glowny:disabled { opacity: .55; cursor: default; }
+  .blad-formularza { font-size: .85rem; color: var(--blad); margin: 0; }
+
+  /* ——— Panel ——— */
   header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem 1.25rem; margin-bottom: 2rem; }
-  h1 { font-size: 1.35rem; font-weight: 680; letter-spacing: -.02em; margin: 0; }
+  h1.tytul { font-size: 1.35rem; font-weight: 680; letter-spacing: -.02em; margin: 0; }
   .znacznik { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
   .spacer { flex: 1 1 auto; }
-  button {
+  button.drugi {
     font: inherit; font-size: .84rem; color: var(--ink-2);
     background: var(--raised); border: 1px solid var(--rule); border-radius: 99px;
     padding: .35rem .95rem; cursor: pointer;
     transition: border-color .2s, color .2s;
   }
-  button:hover { border-color: var(--accent); color: var(--accent); }
-  button:disabled { opacity: .5; cursor: default; }
+  button.drugi:hover { border-color: var(--accent); color: var(--accent); }
+  button.drugi:disabled { opacity: .5; cursor: default; }
 
   .komunikat {
     border: 1px solid var(--rule); border-left: 3px solid var(--ostrzez);
@@ -44,10 +74,6 @@
   }
   .komunikat h2 { font-size: .98rem; font-weight: 650; margin: 0 0 .3rem; }
   .komunikat p { margin: 0; font-size: .9rem; color: var(--ink-2); }
-  .komunikat code {
-    font-family: var(--mono); font-size: .82rem; color: var(--accent);
-    background: var(--ground); padding: .1rem .35rem; border-radius: 4px;
-  }
 
   .grupa { margin-bottom: 2.5rem; }
   .grupa > h2 {
@@ -78,8 +104,6 @@
   }
   .zmiana.w-gore { color: var(--accent); }
   .zmiana.bez { color: var(--ink-3); }
-
-  /* Wskaźniki przeliczane, nie surowe liczby: mówią, czy produkt działa. */
   .kafel.wyliczony { border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
   .kafel.wyliczony .liczba { color: var(--accent); }
 
@@ -92,37 +116,63 @@
   footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: .8rem; color: var(--ink-3); }
   footer a { color: var(--ink-2); text-decoration: none; }
   footer a:hover { color: var(--accent); text-decoration: underline; }
+
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
+<!-- ——— Ekran logowania ——— -->
+<div class="brama" id="brama">
+  <form id="formularz">
+    <h1>Panel Find GymBro</h1>
+    <p class="pod">Zaloguj się kontem z uprawnieniami administratora.</p>
+    <label>E-mail
+      <input type="email" id="mail" autocomplete="username" inputmode="email"
+             autocapitalize="none" autocorrect="off" spellcheck="false" required>
+    </label>
+    <label>Hasło
+      <input type="password" id="haslo" autocomplete="current-password" required>
+    </label>
+    <p class="blad-formularza" id="bladFormularza" hidden></p>
+    <button class="glowny" id="zaloguj" type="submit">Zaloguj się</button>
+  </form>
+</div>
+
+<!-- ——— Panel ——— -->
+<div class="wrap" id="panel" hidden>
   <header>
-    <h1>Find GymBro</h1>
+    <h1 class="tytul">Find GymBro</h1>
     <span class="znacznik" id="znacznik">wczytywanie…</span>
     <span class="spacer"></span>
-    <button id="odswiez">Odśwież</button>
+    <button class="drugi" id="odswiez">Odśwież</button>
+    <button class="drugi" id="wyloguj">Wyloguj</button>
   </header>
-
   <div id="tresc"></div>
-
   <footer>
     Panel prywatny. Liczby zbiorcze, bez danych osobowych.
     <a href="/">findgymbro.pl</a>
   </footer>
-
 </div>
 
-<script>
-const ADRES = 'https://srhmakuqrvhecfpihzkn.supabase.co/functions/v1/statystyki';
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Token nie jest zapisywany w kodzie strony — bierzemy go z adresu, pod którym
-// panel został otwarty. Dzięki temu plik może leżeć publicznie na GitHub Pages.
-const token = new URLSearchParams(location.search).get('token');
+const ADRES_PROJEKTU = 'https://srhmakuqrvhecfpihzkn.supabase.co';
+// Klucz publiczny — ten sam, który nosi w sobie aplikacja mobilna. Sam z siebie
+// nie daje dostępu do niczego: statystyki widzi wyłącznie konto wpisane
+// do tabeli administratorów, a sprawdza to funkcja brzegowa.
+const KLUCZ_PUBLICZNY = 'sb_publishable_oCfgXUMYimV3DWIcChA5uA_PrVFCYtI';
 
+const supabase = createClient(ADRES_PROJEKTU, KLUCZ_PUBLICZNY);
+
+const brama = document.getElementById('brama');
+const panel = document.getElementById('panel');
+const formularz = document.getElementById('formularz');
+const bladFormularza = document.getElementById('bladFormularza');
+const przyciskZaloguj = document.getElementById('zaloguj');
 const tresc = document.getElementById('tresc');
 const znacznik = document.getElementById('znacznik');
-const przyciskOdswiez = document.getElementById('odswiez');
 
 const GRUPY = [
   { tytul: 'Ludzie', miary: ['konta', 'konta_potwierdzone', 'profile_ukonczone', 'aktywni_7_dni', 'aktywni_30_dni', 'nowi_7_dni'] },
@@ -131,144 +181,161 @@ const GRUPY = [
   { tytul: 'Moderacja', miary: ['zgloszenia_naduzyc', 'blokady', 'zbanowani'] },
 ];
 
-function liczba(n) {
-  return new Intl.NumberFormat('pl-PL').format(n);
-}
+const liczba = (n) => new Intl.NumberFormat('pl-PL').format(n);
 
 function kafel({ nazwa, wartosc, opis, zmiana, wyliczony }) {
   const zm = zmiana == null ? '' :
     `<span class="zmiana ${zmiana > 0 ? 'w-gore' : 'bez'}">${zmiana > 0 ? '+' + zmiana : '—'}</span>`;
-  return `<div class="kafel${wyliczony ? ' wyliczony' : ''}">
-    ${zm}
+  return `<div class="kafel${wyliczony ? ' wyliczony' : ''}">${zm}
     <span class="liczba">${wartosc}</span>
     <span class="nazwa">${nazwa}</span>
-    <span class="opis">${opis}</span>
-  </div>`;
+    <span class="opis">${opis}</span></div>`;
 }
 
 /** Wskaźniki, które faktycznie mówią, czy produkt działa. */
 function wyliczone(m) {
-  const kafle = [];
-  const ogl = m.ogloszenia?.wartosc ?? 0;
-  const zgl = m.zgloszenia?.wartosc ?? 0;
+  const k = [];
+  const ogl = m.ogloszenia?.wartosc ?? 0, zgl = m.zgloszenia?.wartosc ?? 0;
   const przyj = m.zgloszenia_przyjete?.wartosc ?? 0;
-  const konta = m.konta?.wartosc ?? 0;
-  const gotowe = m.profile_ukonczone?.wartosc ?? 0;
-
-  if (konta > 0) kafle.push(kafel({
-    nazwa: 'Kreator do końca', wartosc: Math.round(gotowe / konta * 100) + '%',
-    opis: `${gotowe} z ${konta} kont ma ukończony profil`, wyliczony: true,
-  }));
-  if (ogl > 0) kafle.push(kafel({
-    nazwa: 'Zgłoszeń na ogłoszenie', wartosc: (zgl / ogl).toFixed(1),
-    opis: 'ile osób średnio się zgłasza', wyliczony: true,
-  }));
-  if (zgl > 0) kafle.push(kafel({
-    nazwa: 'Skuteczność zgłoszeń', wartosc: Math.round(przyj / zgl * 100) + '%',
-    opis: `${przyj} z ${zgl} zgłoszeń przyjęto`, wyliczony: true,
-  }));
-  return kafle;
+  const konta = m.konta?.wartosc ?? 0, gotowe = m.profile_ukonczone?.wartosc ?? 0;
+  if (konta > 0) k.push(kafel({ nazwa: 'Kreator do końca', wartosc: Math.round(gotowe / konta * 100) + '%',
+    opis: `${gotowe} z ${konta} kont ma ukończony profil`, wyliczony: true }));
+  if (ogl > 0) k.push(kafel({ nazwa: 'Zgłoszeń na ogłoszenie', wartosc: (zgl / ogl).toFixed(1),
+    opis: 'ile osób średnio się zgłasza', wyliczony: true }));
+  if (zgl > 0) k.push(kafel({ nazwa: 'Skuteczność zgłoszeń', wartosc: Math.round(przyj / zgl * 100) + '%',
+    opis: `${przyj} z ${zgl} zgłoszeń przyjęto`, wyliczony: true }));
+  return k;
 }
 
-/** Prosty wykres liniowy — bez bibliotek, sam SVG. */
 function wykres(historia, klucz, tytul, pod) {
-  const punkty = historia
-    .map((h) => ({ dzien: h.dzien, v: Number(h.miary?.[klucz] ?? 0) }))
-    .filter((p) => Number.isFinite(p.v));
-
+  const punkty = historia.map((h) => ({ dzien: h.dzien, v: Number(h.miary?.[klucz] ?? 0) }))
+                         .filter((p) => Number.isFinite(p.v));
   if (punkty.length < 2) {
     return `<div class="wykres"><h3>${tytul}</h3><p class="pod">${pod}</p>
       <p class="brak">Trend pojawi się po drugim dniu zbierania migawek.</p></div>`;
   }
-
   const W = 600, H = 140;
   const max = Math.max(...punkty.map((p) => p.v), 1);
-  const krok = punkty.length > 1 ? W / (punkty.length - 1) : W;
+  const krok = W / (punkty.length - 1);
   const wsp = punkty.map((p, i) => [i * krok, H - (p.v / max) * (H - 12)]);
   const linia = wsp.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-  const pole = `${linia} L${W},${H} L0,${H} Z`;
-  const ostatni = punkty[punkty.length - 1];
-
-  return `<div class="wykres">
-    <h3>${tytul}</h3>
-    <p class="pod">${pod} · ostatnio ${liczba(ostatni.v)} (${ostatni.dzien})</p>
+  const ost = punkty[punkty.length - 1];
+  return `<div class="wykres"><h3>${tytul}</h3>
+    <p class="pod">${pod} · ostatnio ${liczba(ost.v)} (${ost.dzien})</p>
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${tytul}">
       <defs><linearGradient id="g-${klucz}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#22C58B" stop-opacity=".28"/>
-        <stop offset="100%" stop-color="#22C58B" stop-opacity="0"/>
-      </linearGradient></defs>
-      <path d="${pole}" fill="url(#g-${klucz})"/>
+        <stop offset="100%" stop-color="#22C58B" stop-opacity="0"/></linearGradient></defs>
+      <path d="${linia} L${W},${H} L0,${H} Z" fill="url(#g-${klucz})"/>
       <path d="${linia}" fill="none" stroke="#22C58B" stroke-width="2"
             stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
       <circle cx="${wsp[wsp.length-1][0]}" cy="${wsp[wsp.length-1][1]}" r="3.5" fill="#7CF5C9"/>
-    </svg>
-  </div>`;
-}
-
-function blad(tytul, opis) {
-  tresc.innerHTML = `<div class="komunikat"><h2>${tytul}</h2><p>${opis}</p></div>`;
-  znacznik.textContent = 'nie wczytano';
+    </svg></div>`;
 }
 
 async function wczytaj() {
-  if (!token) {
-    return blad('Brak tokenu w adresie',
-      'Otwórz panel pełnym adresem, z parametrem <code>?token=…</code>. Bez niego nie ma dostępu do danych.');
-  }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return pokazBrame();
 
-  przyciskOdswiez.disabled = true;
   znacznik.textContent = 'wczytywanie…';
-
   try {
-    const odp = await fetch(`${ADRES}?token=${encodeURIComponent(token)}`);
-    if (odp.status === 401) {
-      return blad('Token odrzucony',
-        'Sprawdź, czy adres jest kompletny i czy w Supabase ustawiono sekret <code>PANEL_TOKEN</code> o tej samej wartości.');
+    const odp = await fetch(`${ADRES_PROJEKTU}/functions/v1/statystyki`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+
+    if (odp.status === 401) { await supabase.auth.signOut(); return pokazBrame('Sesja wygasła. Zaloguj się ponownie.'); }
+    if (odp.status === 403) {
+      tresc.innerHTML = `<div class="komunikat"><h2>Brak dostępu</h2>
+        <p>To konto nie ma uprawnień do panelu. Zaloguj się kontem administratora.</p></div>`;
+      znacznik.textContent = 'brak dostępu';
+      return;
     }
-    if (!odp.ok) return blad('Serwer odpowiedział błędem', `Kod ${odp.status}. Spróbuj ponownie za chwilę.`);
+    if (!odp.ok) {
+      tresc.innerHTML = `<div class="komunikat"><h2>Serwer odpowiedział błędem</h2>
+        <p>Kod ${odp.status}. Spróbuj ponownie za chwilę.</p></div>`;
+      return;
+    }
 
     const dane = await odp.json();
     const m = Object.fromEntries((dane.miary ?? []).map((x) => [x.miara, { wartosc: Number(x.wartosc), opis: x.opis }]));
-
-    // Zmiana względem wczorajszej migawki.
     const hist = dane.historia ?? [];
     const wczoraj = hist.length >= 2 ? hist[hist.length - 2].miary : null;
 
     let html = '';
-
     const wyl = wyliczone(m);
     if (wyl.length) html += `<div class="grupa"><h2>Wskaźniki</h2><div class="kafle">${wyl.join('')}</div></div>`;
 
     for (const g of GRUPY) {
       const kafle = g.miary.filter((k) => m[k]).map((k) => {
         const poprz = wczoraj?.[k];
-        const zmiana = poprz == null ? null : m[k].wartosc - Number(poprz);
         return kafel({
-          nazwa: k.replaceAll('_', ' '),
-          wartosc: liczba(m[k].wartosc),
-          opis: m[k].opis,
-          zmiana,
+          nazwa: k.replaceAll('_', ' '), wartosc: liczba(m[k].wartosc), opis: m[k].opis,
+          zmiana: poprz == null ? null : m[k].wartosc - Number(poprz),
         });
       });
       if (kafle.length) html += `<div class="grupa"><h2>${g.tytul}</h2><div class="kafle">${kafle.join('')}</div></div>`;
     }
 
-    html += `<div class="grupa"><h2>Trend</h2><div class="kafle" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    html += `<div class="grupa"><h2>Trend</h2>
+      <div class="kafle" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       ${wykres(hist, 'konta', 'Konta', 'wszystkie założone')}
       ${wykres(hist, 'ogloszenia', 'Ogłoszenia', 'wystawione łącznie')}
-    </div></div>`;
+      </div></div>`;
 
     tresc.innerHTML = html;
-    znacznik.textContent = 'stan na ' + new Date(dane.pobrano).toLocaleString('pl-PL');
-  } catch (e) {
-    blad('Nie udało się połączyć', 'Sprawdź połączenie z internetem i spróbuj ponownie.');
-  } finally {
-    przyciskOdswiez.disabled = false;
+    znacznik.textContent = `${dane.kto} · stan na ${new Date(dane.pobrano).toLocaleString('pl-PL')}`;
+  } catch {
+    tresc.innerHTML = `<div class="komunikat"><h2>Nie udało się połączyć</h2>
+      <p>Sprawdź połączenie z internetem i spróbuj ponownie.</p></div>`;
   }
 }
 
-przyciskOdswiez.addEventListener('click', wczytaj);
-wczytaj();
+function pokazBrame(komunikat) {
+  panel.hidden = true;
+  brama.hidden = false;
+  if (komunikat) { bladFormularza.textContent = komunikat; bladFormularza.hidden = false; }
+}
+
+function pokazPanel() {
+  brama.hidden = true;
+  panel.hidden = false;
+  wczytaj();
+}
+
+formularz.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  bladFormularza.hidden = true;
+  przyciskZaloguj.disabled = true;
+  przyciskZaloguj.textContent = 'Logowanie…';
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: document.getElementById('mail').value.trim(),
+    password: document.getElementById('haslo').value,
+  });
+
+  przyciskZaloguj.disabled = false;
+  przyciskZaloguj.textContent = 'Zaloguj się';
+
+  if (error) {
+    bladFormularza.textContent = /invalid login/i.test(error.message)
+      ? 'Nieprawidłowy e-mail lub hasło.'
+      : error.message;
+    bladFormularza.hidden = false;
+    return;
+  }
+  document.getElementById('haslo').value = '';
+  pokazPanel();
+});
+
+document.getElementById('odswiez').addEventListener('click', wczytaj);
+document.getElementById('wyloguj').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  location.reload();
+});
+
+// Sesja przeżywa odświeżenie strony, więc przy powrocie nie trzeba się logować.
+const { data: { session } } = await supabase.auth.getSession();
+if (session) pokazPanel();
 </script>
 </body>
 </html>
