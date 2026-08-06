@@ -171,6 +171,50 @@
   footer a { color: var(--ink-2); text-decoration: none; }
   footer a:hover { color: var(--accent); text-decoration: underline; }
 
+  /* ——— Moderacja ——— */
+  .sprawa {
+    border: 1px solid var(--rule); border-left: 3px solid var(--ostrzez);
+    border-radius: 14px; background: var(--raised);
+    padding: 1.05rem 1.2rem 1.15rem; display: grid; gap: .65rem;
+  }
+  .sprawa + .sprawa { margin-top: .8rem; }
+  .sprawa .naglowek { display: flex; flex-wrap: wrap; gap: .35rem .7rem; align-items: baseline; }
+  .sprawa .powod { font-size: .98rem; font-weight: 650; }
+  .sprawa .kiedy { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); margin-left: auto; }
+  .sprawa .meta { font-size: .82rem; color: var(--ink-2); margin: 0; }
+  .sprawa .meta b { color: var(--ink); font-weight: 600; }
+  .sprawa .cytat {
+    margin: 0; padding: .55rem .8rem; background: var(--ground);
+    border-left: 2px solid var(--rule); border-radius: 0 8px 8px 0;
+    font-size: .88rem; white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .sprawa .cytat.puste { color: var(--ink-3); font-style: italic; }
+  .sprawa .kontekst { font-size: .77rem; color: var(--ink-3); margin: 0; }
+  .sprawa .decyzja { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .2rem; }
+  .sprawa .decyzja input { flex: 1 1 13rem; width: auto; font-size: .85rem; padding: .5rem .7rem; }
+  .sprawa button {
+    font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 9px; padding: .5rem .95rem;
+    background: var(--raised); color: var(--ink-2);
+  }
+  .sprawa button.odrzuc:hover:enabled { border-color: var(--accent); color: var(--accent); }
+  .sprawa button.zbanuj { border-color: rgba(255,90,78,.4); color: var(--blad); }
+  .sprawa button.zbanuj:hover:enabled { background: rgba(255,90,78,.12); }
+  .sprawa button:disabled { opacity: .5; cursor: default; }
+  .sprawa .odzew { font-size: .82rem; margin: 0; }
+  .sprawa .odzew.dobrze { color: var(--accent); }
+  .sprawa .odzew.zle { color: var(--blad); }
+  .recydywa { color: var(--ostrzez); font-weight: 600; }
+  .spokoj {
+    border: 1px dashed var(--rule); border-radius: 14px;
+    padding: 1.5rem 1.2rem; text-align: center; color: var(--ink-3); font-size: .88rem;
+  }
+  details.historia { margin-top: 1.1rem; }
+  details.historia summary { cursor: pointer; font-size: .82rem; color: var(--ink-2); }
+  details.historia summary:hover { color: var(--accent); }
+  details.historia .sprawa { border-left-color: var(--rule); opacity: .8; }
+  details.historia .sprawa:first-of-type { margin-top: .8rem; }
+
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -237,6 +281,26 @@ const GRUPY = [
 
 const liczba = (n) => new Intl.NumberFormat('pl-PL').format(n);
 
+/**
+ * Ucieczka znaków dla wszystkiego, co napisał użytkownik.
+ *
+ * Panel składa widok z gotowych kawałków HTML, więc imię w rodzaju
+ * `<img onerror=...>` wykonałoby się w przeglądarce administratora.
+ * W moderacji to nie jest teoria: ona z definicji pokazuje treści osób,
+ * które ktoś już zgłosił, więc wrogi wpis jest tam scenariuszem domyślnym.
+ */
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (z) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]
+));
+
+/** Polska odmiana przez liczbę: 1 zgłoszenie, 2 zgłoszenia, 5 zgłoszeń. */
+const odmiana = (n, jeden, kilka, wiele) => {
+  const d = n % 10, s = n % 100;
+  if (n === 1) return jeden;
+  if (d >= 2 && d <= 4 && (s < 12 || s > 14)) return kilka;
+  return wiele;
+};
+
 function kafel({ nazwa, wartosc, opis, zmiana, wyliczony }) {
   const zm = zmiana == null ? '' :
     `<span class="zmiana ${zmiana > 0 ? 'w-gore' : 'bez'}">${zmiana > 0 ? '+' + zmiana : '—'}</span>`;
@@ -293,7 +357,7 @@ function miasta(lista) {
   const bezMasy = lista.filter((m) => !m.ma_mase).length;
   return `<div class="miasta">` + lista.map((m) => `
     <div class="miasto${m.ma_mase ? '' : ' bez-masy'}">
-      <span class="nazwa-m">${m.miasto}${m.ma_mase ? '' : '<span class="martwe">jedna osoba</span>'}</span>
+      <span class="nazwa-m">${esc(m.miasto)}${m.ma_mase ? '' : '<span class="martwe">jedna osoba</span>'}</span>
       <span class="ile">${liczba(m.osoby)} os. · ${liczba(m.ogloszenia)} ogł.</span>
       <div class="tor"><div class="wypelnienie" style="width:${Math.max(m.osoby / max * 100, 3)}%"></div></div>
     </div>`).join('') +
@@ -335,12 +399,12 @@ function konta(lista) {
 
   const wiersze = widoczne.map((k) => `<tr>
     <td>
-      <strong>${k.imie ?? '<span style="color:var(--ink-3)">bez profilu</span>'}</strong>
+      <strong>${k.imie ? esc(k.imie) : '<span style="color:var(--ink-3)">bez profilu</span>'}</strong>
       ${k.zbanowany ? '<span class="znak ban">ban</span>' : ''}
-      <span class="mail">${k.email}</span>
+      <span class="mail">${esc(k.email)}</span>
     </td>
-    <td><span class="znak ${k.rodzaj.replace('ż', 'z')}">${k.rodzaj}</span></td>
-    <td>${k.miasto ?? '—'}</td>
+    <td><span class="znak ${esc(k.rodzaj.replace('ż', 'z'))}">${esc(k.rodzaj)}</span></td>
+    <td>${k.miasto ? esc(k.miasto) : '—'}</td>
     <td class="liczbowa">${k.ogloszen}</td>
     <td class="liczbowa">${k.zgloszen_wyslanych}</td>
     <td class="liczbowa">${kiedy(k.ostatnia_aktywnosc)}</td>
@@ -383,15 +447,144 @@ function wykres(historia, klucz, tytul, pod) {
     </svg></div>`;
 }
 
+/* ——————————————————————————————————————————————————————————————
+   Moderacja
+
+   Idzie na samą górę panelu, przed statystykami, bo jako jedyna część
+   wymaga decyzji, a nie oglądania. Regulamin obiecuje reakcję w 48 godzin.
+   —————————————————————————————————————————————————————————————— */
+
+const NAZWA_TYPU = { profil: 'profil', ogloszenie: 'ogłoszenie', wiadomosc: 'wiadomość' };
+
+function sprawa(z, zamknieta) {
+  const recydywa = z.ile_zgloszen > 1
+    ? ` · <span class="recydywa">${z.ile_zgloszen} ${odmiana(z.ile_zgloszen,
+        'zgłoszenie', 'zgłoszenia', 'zgłoszeń')} na tę osobę</span>`
+    : '';
+
+  const cytat = z.tresc
+    ? `<p class="cytat">${esc(z.tresc)}</p>`
+    : `<p class="cytat puste">Zgłoszony materiał nie ma treści tekstowej.</p>`;
+
+  const szczegoly = z.szczegoly
+    ? `<p class="meta">Od zgłaszającego: ${esc(z.szczegoly)}</p>` : '';
+
+  // Zbanowanemu nie ma czego banować drugi raz — zostaje samo zamknięcie sprawy.
+  const stopka = zamknieta
+    ? `<p class="meta">Decyzja: <b>${z.decyzja === 'ban' ? 'blokada konta' : 'zamknięte bez działań'}</b>
+         ${z.rozpatrzono ? '· ' + kiedy(z.rozpatrzono) : ''}
+         ${z.notatka_moderatora ? '· ' + esc(z.notatka_moderatora) : ''}</p>`
+    : `<div class="decyzja">
+         <input type="text" placeholder="${z.juz_zbanowany
+            ? 'Notatka do zamknięcia (opcjonalnie)' : 'Powód decyzji'}"
+                maxlength="200" aria-label="Powód decyzji">
+         <button class="odrzuc" data-akcja="odrzuc">Zamknij bez działań</button>
+         ${z.juz_zbanowany ? '' : '<button class="zbanuj" data-akcja="zbanuj">Zablokuj konto</button>'}
+       </div>
+       <p class="odzew" hidden></p>`;
+
+  return `<div class="sprawa" data-id="${esc(z.id)}" data-kto="${esc(z.kto)}">
+    <div class="naglowek">
+      <span class="powod">${esc(z.powod)}</span>
+      <span class="kiedy">${kiedy(z.zgloszono)}</span>
+    </div>
+    <p class="meta">Dotyczy: <b>${esc(z.kto)}</b>${z.juz_zbanowany
+        ? ' <span class="znak ban">konto zablokowane</span>' : ''}
+      · zgłosił: ${esc(z.zglaszajacy)} · ${NAZWA_TYPU[z.typ] ?? esc(z.typ)}${recydywa}</p>
+    ${szczegoly}
+    ${cytat}
+    <p class="kontekst">${esc(z.kontekst ?? '')}</p>
+    ${stopka}
+  </div>`;
+}
+
+async function wczytajModeracje() {
+  const [otwarte, zamkniete] = await Promise.all([
+    supabase.rpc('moderacja_lista', { p_zalatwione: false }),
+    supabase.rpc('moderacja_lista', { p_zalatwione: true }),
+  ]);
+
+  if (otwarte.error) {
+    return `<div class="grupa"><h2>Moderacja</h2>
+      <div class="komunikat"><h2>Nie udało się wczytać zgłoszeń</h2>
+      <p>${esc(otwarte.error.message)}</p></div></div>`;
+  }
+
+  const lista = otwarte.data ?? [];
+  const historia = zamkniete.error ? [] : (zamkniete.data ?? []);
+
+  const czolo = lista.length
+    ? lista.map((z) => sprawa(z, false)).join('')
+    : `<p class="spokoj">Brak otwartych zgłoszeń. Nowe zobaczysz tutaj i dostaniesz push na telefon.</p>`;
+
+  const ogon = historia.length
+    ? `<details class="historia"><summary>Rozpatrzone sprawy (${historia.length})</summary>
+         ${historia.map((z) => sprawa(z, true)).join('')}</details>`
+    : '';
+
+  const naglowek = lista.length
+    ? `Moderacja — ${lista.length} ${odmiana(lista.length, 'sprawa', 'sprawy', 'spraw')} do decyzji`
+    : 'Moderacja';
+
+  return `<div class="grupa" id="grupa-moderacji"><h2>${naglowek}</h2>${czolo}${ogon}</div>`;
+}
+
+/** Obsługa obu przycisków decyzji. Po sukcesie przeładowujemy cały panel,
+    bo blokada zmienia też statystyki i listę kont. */
+async function decyzja(przycisk) {
+  const karta = przycisk.closest('.sprawa');
+  const pole = karta.querySelector('input');
+  const odzew = karta.querySelector('.odzew');
+  const powod = pole.value.trim();
+  const ban = przycisk.dataset.akcja === 'zbanuj';
+
+  const pokaz = (tekst, dobrze) => {
+    odzew.textContent = tekst;
+    odzew.className = `odzew ${dobrze ? 'dobrze' : 'zle'}`;
+    odzew.hidden = false;
+  };
+
+  if (ban && !powod) {
+    pokaz('Podaj powód blokady — trafia do rejestru decyzji.', false);
+    pole.focus();
+    return;
+  }
+  if (ban && !confirm(
+    `Zablokować konto „${karta.dataset.kto}"?\n\n` +
+    'Ogłoszenia zostaną anulowane, umówione treningi odwołane, rozmowy zamknięte, ' +
+    'a logowanie przestanie działać. Cofnąć da się tylko z bazy.'
+  )) return;
+
+  karta.querySelectorAll('button').forEach((b) => (b.disabled = true));
+  odzew.hidden = true;
+
+  const { data, error } = ban
+    ? await supabase.rpc('moderacja_zbanuj', { p_zgloszenie: karta.dataset.id, p_powod: powod })
+    : await supabase.rpc('moderacja_odrzuc', { p_zgloszenie: karta.dataset.id, p_notatka: powod || null });
+
+  if (error) {
+    karta.querySelectorAll('button').forEach((b) => (b.disabled = false));
+    pokaz(error.message, false);
+    return;
+  }
+  pokaz(data ?? 'Gotowe.', true);
+  setTimeout(wczytaj, 900);
+}
+
 async function wczytaj() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return pokazBrame();
 
   znacznik.textContent = 'wczytywanie…';
   try {
-    const odp = await fetch(`${ADRES_PROJEKTU}/functions/v1/statystyki`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
+    // Moderacja idzie prosto do bazy, statystyki przez funkcję brzegową.
+    // Równolegle, bo to dwie niezależne podróże.
+    const [odp, moderacja] = await Promise.all([
+      fetch(`${ADRES_PROJEKTU}/functions/v1/statystyki`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }),
+      wczytajModeracje(),
+    ]);
 
     if (odp.status === 401) { await supabase.auth.signOut(); return pokazBrame('Sesja wygasła. Zaloguj się ponownie.'); }
     if (odp.status === 403) {
@@ -411,7 +604,7 @@ async function wczytaj() {
     const hist = dane.historia ?? [];
     const wczoraj = hist.length >= 2 ? hist[hist.length - 2].miary : null;
 
-    let html = '';
+    let html = moderacja;
     const wyl = wyliczone(m);
     if (wyl.length) html += `<div class="grupa"><h2>Wskaźniki</h2><div class="kafle">${wyl.join('')}</div></div>`;
 
@@ -510,6 +703,12 @@ formularz.addEventListener('submit', async (e) => {
   }
   document.getElementById('haslo').value = '';
   pokazPanel();
+});
+
+// Decyzje moderacyjne. Delegacja, bo karty powstają przy każdym odświeżeniu.
+tresc.addEventListener('click', (e) => {
+  const przycisk = e.target.closest('[data-akcja]');
+  if (przycisk) decyzja(przycisk);
 });
 
 // Filtr kont przerysowuje samą tabelę, bez ponownego pytania serwera.
