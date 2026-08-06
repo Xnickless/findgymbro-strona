@@ -107,6 +107,29 @@
   .kafel.wyliczony { border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
   .kafel.wyliczony .liczba { color: var(--accent); }
 
+  /* ——— Lejek ——— */
+  .lejek { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); padding: 1.25rem 1.35rem 1.4rem; display: grid; gap: .85rem; }
+  .lejek .krok { display: grid; grid-template-columns: 1fr auto; gap: .3rem .75rem; align-items: baseline; }
+  .lejek .etykieta { font-size: .88rem; font-weight: 600; }
+  .lejek .osoby { font-family: var(--mono); font-size: .82rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .lejek .tor { grid-column: 1 / -1; height: 10px; border-radius: 99px; background: var(--ground); overflow: hidden; }
+  .lejek .wypelnienie { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-hi)); }
+  .lejek .spadek {
+    grid-column: 1 / -1; font-size: .75rem; color: var(--ink-3);
+    margin: -.15rem 0 .1rem; padding-left: .1rem;
+  }
+  .lejek .spadek b { color: var(--ostrzez); font-weight: 600; }
+
+  /* ——— Miasta ——— */
+  .miasta { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); padding: 1.25rem 1.35rem 1.4rem; display: grid; gap: .7rem; }
+  .miasto { display: grid; grid-template-columns: 1fr auto; gap: .25rem .75rem; align-items: baseline; }
+  .miasto .nazwa-m { font-size: .88rem; font-weight: 600; }
+  .miasto .nazwa-m .martwe { font-size: .72rem; font-weight: 500; color: var(--ostrzez); margin-left: .45rem; }
+  .miasto .ile { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .miasto .tor { grid-column: 1 / -1; height: 7px; border-radius: 99px; background: var(--ground); overflow: hidden; }
+  .miasto .wypelnienie { height: 100%; border-radius: 99px; background: var(--accent); }
+  .miasto.bez-masy .wypelnienie { background: var(--ink-3); }
+
   .wykres { border: 1px solid var(--rule); border-radius: 14px; background: var(--raised); padding: 1.15rem 1.25rem 1rem; }
   .wykres h3 { font-size: .92rem; font-weight: 650; margin: 0 0 .15rem; }
   .wykres .pod { font-size: .78rem; color: var(--ink-3); margin: 0 0 1rem; }
@@ -207,6 +230,47 @@ function wyliczone(m) {
   return k;
 }
 
+/**
+ * Lejek: sześć kroków od rejestracji do treningu.
+ *
+ * Szerokość paska liczymy względem PIERWSZEGO kroku, nie największego, bo
+ * lejek z definicji tylko się zwęża — dzięki temu widać skalę odpadania.
+ * Pod każdym przejściem piszemy, ile procent przeszło dalej i ilu ludzi
+ * odpadło, bo sam procent nie mówi, czy to problem trzech osób czy trzystu.
+ */
+function lejek(kroki) {
+  if (!kroki.length) return '';
+  const baza = Math.max(kroki[0].osoby, 1);
+  return `<div class="lejek">` + kroki.map((k, i) => {
+    const poprz = i > 0 ? kroki[i - 1].osoby : null;
+    const procent = poprz ? (poprz > 0 ? Math.round(k.osoby / poprz * 100) : 0) : null;
+    const stracone = poprz ? poprz - k.osoby : 0;
+    const przejscie = poprz == null ? '' :
+      `<div class="spadek">${procent}% przeszło dalej${stracone > 0 ? `, <b>odpadło ${liczba(stracone)}</b>` : ''}</div>`;
+    return `${przejscie}<div class="krok">
+      <span class="etykieta">${k.krok}</span>
+      <span class="osoby">${liczba(k.osoby)}</span>
+      <div class="tor"><div class="wypelnienie" style="width:${Math.max(k.osoby / baza * 100, k.osoby > 0 ? 2 : 0)}%"></div></div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+/** Miasta: obok liczby osób zaznaczamy te bez masy krytycznej. */
+function miasta(lista) {
+  if (!lista.length) return '<div class="miasta"><p class="brak">Brak danych o miastach.</p></div>';
+  const max = Math.max(...lista.map((m) => m.osoby), 1);
+  const bezMasy = lista.filter((m) => !m.ma_mase).length;
+  return `<div class="miasta">` + lista.map((m) => `
+    <div class="miasto${m.ma_mase ? '' : ' bez-masy'}">
+      <span class="nazwa-m">${m.miasto}${m.ma_mase ? '' : '<span class="martwe">jedna osoba</span>'}</span>
+      <span class="ile">${liczba(m.osoby)} os. · ${liczba(m.ogloszenia)} ogł.</span>
+      <div class="tor"><div class="wypelnienie" style="width:${Math.max(m.osoby / max * 100, 3)}%"></div></div>
+    </div>`).join('') +
+    (bezMasy ? `<p class="opis" style="margin:.4rem 0 0;font-size:.78rem;color:var(--ink-3)">
+      ${bezMasy} ${bezMasy === 1 ? 'miasto ma' : 'miast ma'} tylko jedną osobę — tam nie ma z kim trenować.</p>` : '') +
+    `</div>`;
+}
+
 function wykres(historia, klucz, tytul, pod) {
   const punkty = historia.map((h) => ({ dzien: h.dzien, v: Number(h.miary?.[klucz] ?? 0) }))
                          .filter((p) => Number.isFinite(p.v));
@@ -264,6 +328,29 @@ async function wczytaj() {
     let html = '';
     const wyl = wyliczone(m);
     if (wyl.length) html += `<div class="grupa"><h2>Wskaźniki</h2><div class="kafle">${wyl.join('')}</div></div>`;
+
+    if (dane.lejek?.length) {
+      html += `<div class="grupa"><h2>Lejek</h2>${lejek(dane.lejek)}</div>`;
+    }
+
+    if (dane.rynek?.length) {
+      const kafle = dane.rynek.map((r) => kafel({
+        nazwa: r.miara.replaceAll('_', ' '),
+        wartosc: r.jednostka === '%' ? Math.round(r.wartosc) + '%'
+               : r.jednostka === 'h' ? (Number(r.wartosc) < 1 && Number(r.wartosc) > 0
+                    ? Math.round(Number(r.wartosc) * 60) + ' min' : Math.round(Number(r.wartosc)) + ' h')
+               : liczba(Math.round(r.wartosc)),
+        opis: r.opis,
+        // Odsetek ogłoszeń bez odzewu to jedyna miara, w której wysoka
+        // wartość jest zła — reszta jest neutralna albo dobra.
+        wyliczony: r.miara === 'ogloszenia_bez_odzewu' && Number(r.wartosc) < 50,
+      }));
+      html += `<div class="grupa"><h2>Zdrowie rynku</h2><div class="kafle">${kafle.join('')}</div></div>`;
+    }
+
+    if (dane.geografia) {
+      html += `<div class="grupa"><h2>Miasta</h2>${miasta(dane.geografia)}</div>`;
+    }
 
     for (const g of GRUPY) {
       const kafle = g.miary.filter((k) => m[k]).map((k) => {
