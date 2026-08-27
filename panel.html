@@ -11,7 +11,7 @@
 <style>
   :root {
     --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
-    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
+    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #78838F;
     --accent: #22C58B; --accent-hi: #7CF5C9; --ostrzez: #E8A33D; --blad: #FF5A4E;
     --sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", monospace;
@@ -103,6 +103,7 @@
     font-family: var(--mono); font-size: .72rem; font-weight: 600;
   }
   .zmiana.w-gore { color: var(--accent); }
+  .zmiana.w-dol { color: var(--blad); }
   .zmiana.bez { color: var(--ink-3); }
   .kafel.wyliczony { border-color: color-mix(in srgb, var(--accent) 35%, var(--rule)); }
   .kafel.wyliczony .liczba { color: var(--accent); }
@@ -303,7 +304,7 @@ const odmiana = (n, jeden, kilka, wiele) => {
 
 function kafel({ nazwa, wartosc, opis, zmiana, wyliczony }) {
   const zm = zmiana == null ? '' :
-    `<span class="zmiana ${zmiana > 0 ? 'w-gore' : 'bez'}">${zmiana > 0 ? '+' + zmiana : '—'}</span>`;
+    `<span class="zmiana ${zmiana > 0 ? 'w-gore' : zmiana < 0 ? 'w-dol' : 'bez'}">${zmiana > 0 ? '+' + zmiana : zmiana < 0 ? zmiana : '—'}</span>`;
   return `<div class="kafel${wyliczony ? ' wyliczony' : ''}">${zm}
     <span class="liczba">${wartosc}</span>
     <span class="nazwa">${nazwa}</span>
@@ -338,10 +339,11 @@ function lejek(kroki) {
   const baza = Math.max(kroki[0].osoby, 1);
   return `<div class="lejek">` + kroki.map((k, i) => {
     const poprz = i > 0 ? kroki[i - 1].osoby : null;
-    const procent = poprz ? (poprz > 0 ? Math.round(k.osoby / poprz * 100) : 0) : null;
     const stracone = poprz ? poprz - k.osoby : 0;
-    const przejscie = poprz == null ? '' :
-      `<div class="spadek">${procent}% przeszło dalej${stracone > 0 ? `, <b>odpadło ${liczba(stracone)}</b>` : ''}</div>`;
+    // Zero w poprzednim kroku to brak przelicznika, nie zero procent — stąd sam myślnik.
+    const przejscie = poprz == null ? '' : poprz > 0
+      ? `<div class="spadek">${Math.round(k.osoby / poprz * 100)}% przeszło dalej${stracone > 0 ? `, <b>odpadło ${liczba(stracone)}</b>` : ''}</div>`
+      : `<div class="spadek">—</div>`;
     return `${przejscie}<div class="krok">
       <span class="etykieta">${k.krok}</span>
       <span class="osoby">${liczba(k.osoby)}</span>
@@ -451,7 +453,7 @@ function wykres(historia, klucz, tytul, pod) {
    Moderacja
 
    Idzie na samą górę panelu, przed statystykami, bo jako jedyna część
-   wymaga decyzji, a nie oglądania. Regulamin obiecuje reakcję w 48 godzin.
+   wymaga decyzji, a nie oglądania. Regulamin obiecuje reakcję w 24 godziny.
    —————————————————————————————————————————————————————————————— */
 
 const NAZWA_TYPU = { profil: 'profil', ogloszenie: 'ogłoszenie', wiadomosc: 'wiadomość' };

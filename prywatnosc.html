@@ -16,7 +16,7 @@
     --rule-strong: #C3CCD6;
     --ink:         #12171C;
     --ink-2:       #4A5764;
-    --ink-3:       #78848F;
+    --ink-3:       #67737E; /* nie jaśniej: na --ground musi trzymać kontrast WCAG AA (4.5:1) */
     --accent:      #0E7A54;
     --accent-soft: #E7F5EF;
     --warn:        #8A5B00;
@@ -35,7 +35,7 @@
       --rule-strong: #364150;
       --ink:         #F2F5F7;
       --ink-2:       #9AA6B2;
-      --ink-3:       #5F6B78;
+      --ink-3:       #78838F;
       --accent:      #22C58B;
       --accent-soft: #0F2A21;
       --warn:        #F2B441;
@@ -46,12 +46,12 @@
   /* Przełącznik motywu musi wygrywać z preferencją systemu — w obie strony. */
   :root[data-theme="dark"] {
     --ground: #0B0D10; --surface: #14181D; --rule: #262D36; --rule-strong: #364150;
-    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #5F6B78;
+    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #78838F;
     --accent: #22C58B; --accent-soft: #0F2A21; --warn: #F2B441; --warn-soft: #2A2010;
   }
   :root[data-theme="light"] {
     --ground: #FBFCFD; --surface: #FFFFFF; --rule: #DFE5EB; --rule-strong: #C3CCD6;
-    --ink: #12171C; --ink-2: #4A5764; --ink-3: #78848F;
+    --ink: #12171C; --ink-2: #4A5764; --ink-3: #67737E;
     --accent: #0E7A54; --accent-soft: #E7F5EF; --warn: #8A5B00; --warn-soft: #FDF4E3;
   }
 
@@ -518,7 +518,7 @@
       <ul>
         <li>Zgłoszenie rozpatrujemy <strong>w ciągu 24 godzin</strong> — także w weekendy.</li>
         <li>Przy zgłoszeniach dotyczących bezpieczeństwa działamy niezwłocznie.</li>
-        <li>Zgłoszona treść znika z widoku pozostałych użytkowników na czas rozpatrywania.</li>
+        <li>Zgłoszoną treść możemy ukryć na czas rozpatrywania, a konta rażąco naruszające zasady blokujemy od razu.</li>
         <li>O wyniku informujemy osobę zgłaszającą na adres, z którego założyła konto.</li>
         <li>Osobie, której konto zablokowaliśmy, podajemy powód decyzji.</li>
       </ul>
