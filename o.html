@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0B0D10">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="Find GymBro. Ktoś szuka partnera na siłownię">
+<meta property="og:description" content="Otwórz zaproszenie w aplikacji. Za darmo i bez reklam.">
+<meta property="og:image" content="https://findgymbro.pl/img/ikona.png">
+<title>Zaproszenie — Find GymBro</title>
+<style>
+  /* Strona-pomost dla linków wysyłanych z aplikacji („Wyślij znajomym",
+     „Zaproś kogoś z tej siłowni"). Komunikatory nie robią klikalnym adresu
+     findgymbro://, więc link prowadzi tutaj, a stąd jeden przycisk otwiera
+     aplikację na właściwym ekranie. Kto aplikacji nie ma, widzi, skąd ją
+     pobrać. Strona NIE pokazuje treści ogłoszenia — ludzie są widoczni
+     dopiero po zalogowaniu. */
+  :root {
+    --ground: #0B0D10; --raised: #14181D; --rule: #262D36;
+    --ink: #F2F5F7; --ink-2: #9AA6B2; --ink-3: #78838F;
+    --accent: #22C58B; --on-accent: #05100B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: var(--ground); color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 1rem; line-height: 1.5; padding: 2rem 1.25rem;
+  }
+  main { width: 100%; max-width: 26rem; text-align: center; }
+  img { width: 76px; height: 76px; border-radius: 18px; }
+  h1 { font-size: 1.6rem; line-height: 1.2; letter-spacing: -.02em; margin: 1.25rem 0 .5rem; text-wrap: balance; }
+  p { color: var(--ink-2); margin: 0 0 1.5rem; }
+  .glowny {
+    display: block; padding: .95rem 1.25rem; border-radius: 14px;
+    background: var(--accent); color: var(--on-accent); font-weight: 600; text-decoration: none;
+  }
+  .glowny:focus-visible, .inne a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .inne {
+    margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--rule);
+    font-size: .92rem; color: var(--ink-3);
+  }
+  .inne a { color: var(--ink); display: inline-block; margin: .35rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+  <img src="img/ikona.png" alt="">
+  <h1 id="tytul">Ktoś zaprasza Cię do Find GymBro</h1>
+  <p id="opis">Znajdź partnera na siłownię: wystawiasz termin, ktoś się zgłasza, trenujecie razem.</p>
+  <a class="glowny" id="otworz" href="findgymbro://">Otwórz w aplikacji</a>
+  <div class="inne">
+    Nie masz jeszcze aplikacji?<br>
+    <a href="https://apps.apple.com/pl/app/find-gymbro/id6797909408">Pobierz na iPhone’a</a>
+    <a href="https://findgymbro.pl/#android">Pobierz na Androida</a>
+  </div>
+</main>
+<script>
+  // Identyfikator trafia do adresu aplikacji tylko wtedy, gdy wygląda jak UUID —
+  // nic z paska adresu nie jest wstawiane do strony jako HTML.
+  var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var q = new URLSearchParams(location.search);
+  var ogloszenie = q.get('ogloszenie'), silownia = q.get('silownia');
+  var przycisk = document.getElementById('otworz');
+
+  if (ogloszenie && UUID.test(ogloszenie)) {
+    przycisk.href = 'findgymbro://listing/' + ogloszenie;
+    przycisk.textContent = 'Otwórz ogłoszenie w aplikacji';
+    document.getElementById('tytul').textContent = 'Ktoś szuka partnera do treningu';
+    document.getElementById('opis').textContent =
+      'Szczegóły zobaczysz w aplikacji po zalogowaniu.';
+  } else if (silownia && UUID.test(silownia)) {
+    przycisk.href = 'findgymbro://gym/' + silownia;
+    przycisk.textContent = 'Otwórz siłownię w aplikacji';
+    document.getElementById('tytul').textContent = 'Zaproszenie na wspólną siłownię';
+    document.getElementById('opis').textContent =
+      'Zobacz, kto szuka tam partnera do treningu, albo wystaw własny termin.';
+  }
+</script>
+</body>
+</html>
